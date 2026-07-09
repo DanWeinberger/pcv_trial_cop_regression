@@ -1,0 +1,69 @@
+Table,Vaccine,Serotype,VE_Measure,Age_Range,Vaccine_Status,Cases,Total_Cases
+Table2,PCV7,4,>=1 dose,2.5m to <=12y,Vaccinated,2,1419
+Table2,PCV7,4,>=1 dose,2.5m to <=12y,Unvaccinated,6,160
+Table2,PCV7,6B,>=1 dose,2.5m to <=12y,Vaccinated,31,1448
+Table2,PCV7,6B,>=1 dose,2.5m to <=12y,Unvaccinated,22,176
+Table2,PCV7,9V,>=1 dose,2.5m to <=12y,Vaccinated,6,1423
+Table2,PCV7,9V,>=1 dose,2.5m to <=12y,Unvaccinated,8,162
+Table2,PCV7,14,>=1 dose,2.5m to <=12y,Vaccinated,9,1426
+Table2,PCV7,14,>=1 dose,2.5m to <=12y,Unvaccinated,59,213
+Table2,PCV7,18C,>=1 dose,2.5m to <=12y,Vaccinated,8,1425
+Table2,PCV7,18C,>=1 dose,2.5m to <=12y,Unvaccinated,12,166
+Table2,PCV7,19F,>=1 dose,2.5m to <=12y,Vaccinated,20,1437
+Table2,PCV7,19F,>=1 dose,2.5m to <=12y,Unvaccinated,20,174
+Table2,PCV7,23F,>=1 dose,2.5m to <=12y,Vaccinated,11,1428
+Table2,PCV7,23F,>=1 dose,2.5m to <=12y,Unvaccinated,16,170
+Table2,PCV7,All PCV7 serotypes,>=1 dose,2.5m to <=12y,Vaccinated,87,1504
+Table2,PCV7,All PCV7 serotypes,>=1 dose,2.5m to <=12y,Unvaccinated,143,297
+Table2,PCV7,4,2+1 doses,13m to <=12y,Vaccinated,2,569
+Table2,PCV7,4,2+1 doses,13m to <=12y,Unvaccinated,1,62
+Table2,PCV7,6B,2+1 doses,13m to <=12y,Vaccinated,0,567
+Table2,PCV7,6B,2+1 doses,13m to <=12y,Unvaccinated,5,66
+Table2,PCV7,9V,2+1 doses,13m to <=12y,Vaccinated,1,568
+Table2,PCV7,9V,2+1 doses,13m to <=12y,Unvaccinated,3,64
+Table2,PCV7,14,2+1 doses,13m to <=12y,Vaccinated,0,567
+Table2,PCV7,14,2+1 doses,13m to <=12y,Unvaccinated,14,75
+Table2,PCV7,18C,2+1 doses,13m to <=12y,Vaccinated,4,571
+Table2,PCV7,18C,2+1 doses,13m to <=12y,Unvaccinated,4,65
+Table2,PCV7,19F,2+1 doses,13m to <=12y,Vaccinated,3,570
+Table2,PCV7,19F,2+1 doses,13m to <=12y,Unvaccinated,3,64
+Table2,PCV7,23F,2+1 doses,13m to <=12y,Vaccinated,2,569
+Table2,PCV7,23F,2+1 doses,13m to <=12y,Unvaccinated,2,63
+Table2,PCV7,All PCV7 serotypes,2+1 doses,13m to <=12y,Vaccinated,12,579
+Table2,PCV7,All PCV7 serotypes,2+1 doses,13m to <=12y,Unvaccinated,31,92
+Table3,PCV13,1,>=1 dose,2.5m to <=9y,Vaccinated,19,1281
+Table3,PCV13,1,>=1 dose,2.5m to <=9y,Unvaccinated,24,160
+Table3,PCV13,3,>=1 dose,2.5m to <=9y,Vaccinated,82,1344
+Table3,PCV13,3,>=1 dose,2.5m to <=9y,Unvaccinated,18,154
+Table3,PCV13,6A,>=1 dose,2.5m to <=9y,Vaccinated,5,1267
+Table3,PCV13,6A,>=1 dose,2.5m to <=9y,Unvaccinated,6,142
+Table3,PCV13,6C,>=1 dose,2.5m to <=9y,Vaccinated,15,1277
+Table3,PCV13,6C,>=1 dose,2.5m to <=9y,Unvaccinated,5,141
+Table3,PCV13,7F,>=1 dose,2.5m to <=9y,Vaccinated,22,1284
+Table3,PCV13,7F,>=1 dose,2.5m to <=9y,Unvaccinated,44,180
+Table3,PCV13,19A,>=1 dose,2.5m to <=9y,Vaccinated,74,1336
+Table3,PCV13,19A,>=1 dose,2.5m to <=9y,Unvaccinated,54,190
+Table3,PCV13,xPCV13+6C,>=1 dose,2.5m to <=9y,Vaccinated,218,1480
+Table3,PCV13,xPCV13+6C,>=1 dose,2.5m to <=9y,Unvaccinated,152,288
+Table3,PCV13,xPCV13+6C but not ST3,>=1 dose,2.5m to <=9y,Vaccinated,136,1398
+Table3,PCV13,xPCV13+6C but not ST3,>=1 dose,2.5m to <=9y,Unvaccinated,134,270
+Table3,PCV13,1,2+1 doses,13m to <=9y,Vaccinated,6,514
+Table3,PCV13,1,2+1 doses,13m to <=9y,Unvaccinated,0,15
+Table3,PCV13,3,2+1 doses,13m to <=9y,Vaccinated,36,544
+Table3,PCV13,3,2+1 doses,13m to <=9y,Unvaccinated,0,15
+Table3,PCV13,6A,2+1 doses,13m to <=9y,Vaccinated,0,508
+Table3,PCV13,6A,2+1 doses,13m to <=9y,Unvaccinated,0,15
+Table3,PCV13,6C,2+1 doses,13m to <=9y,Vaccinated,4,512
+Table3,PCV13,6C,2+1 doses,13m to <=9y,Unvaccinated,2,17
+Table3,PCV13,7F,2+1 doses,13m to <=9y,Vaccinated,4,512
+Table3,PCV13,7F,2+1 doses,13m to <=9y,Unvaccinated,0,15
+Table3,PCV13,19A,2+1 doses,13m to <=9y,Vaccinated,26,534
+Table3,PCV13,19A,2+1 doses,13m to <=9y,Unvaccinated,5,20
+Table3,PCV13,xPCV13+6C,2+1 doses,13m to <=9y,Vaccinated,76,584
+Table3,PCV13,xPCV13+6C,2+1 doses,13m to <=9y,Unvaccinated,8,23
+Table3,PCV13,xPCV13+6C but not ST3,2+1 doses,13m to <=9y,Vaccinated,40,548
+Table3,PCV13,xPCV13+6C but not ST3,2+1 doses,13m to <=9y,Unvaccinated,8,23
+Table3,PCV13,xPCV13 but not ST3 or 6C,2+1 doses,13m to <=9y,Vaccinated,36,544
+Table3,PCV13,xPCV13 but not ST3 or 6C,2+1 doses,13m to <=9y,Unvaccinated,6,21
+Table3,PCV13,xPCV13 but not 6C,2+1 doses,13m to <=9y,Vaccinated,72,580
+Table3,PCV13,xPCV13 but not 6C,2+1 doses,13m to <=9y,Unvaccinated,6,21

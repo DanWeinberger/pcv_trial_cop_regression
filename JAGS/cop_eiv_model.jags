@@ -1,0 +1,71 @@
+## Bayesian error-in-variables Poisson regression for a pneumococcal
+## correlate of protection (COP), NCKP immunogenicity data only.
+##
+## Data are organised BY SEROTYPE (s = 1..S). Each serotype contributes two
+## Poisson observations: the unimmunized (reference) arm and the immunized arm.
+##
+##   cases_u[s], cases_i[s]  observed serotype-specific IPD case counts
+##   total_u[s], total_i[s]  offsets (Total_Cases), used as log-exposure
+##   lgmc_u[s], lgmc_i[s]    OBSERVED log-GMC (log geometric mean concentration)
+##   prec_u[s], prec_i[s]    measurement precision of the observed log-GMC
+##                           (= 1 / SE^2, SE derived from the 95% CI)
+##
+## Centering: for each serotype the unimmunized true log-GMC is the reference and
+## is set to 0 on the predictor scale. This is done IN-MODEL via a latent
+## reference ref[s], so measurement error in the unimmunized GMC propagates into
+## the immunized centered predictor x[s] (error-in-variables with a propagated
+## reference).
+
+model {
+  for (s in 1:S) {
+
+    ## ---- Error-in-variables measurement model ----------------------------
+    # latent TRUE unimmunized log-GMC for this serotype (the reference).
+    ref[s] ~ dnorm(0, 1.0E-4)
+    lgmc_u[s] ~ dnorm(ref[s], prec_u[s])          # noisy measurement of reference
+
+    # x[s] = latent TRUE *centered* log-GMC for the immunized arm
+    #      = (true immunized log-GMC) - (true unimmunized log-GMC).
+    # This is the error-corrected predictor; a weakly-informative population
+    # distribution regularises it.
+    x[s] ~ dnorm(mu_x, tau_x)
+    lgmc_i[s] ~ dnorm(ref[s] + x[s], prec_i[s])   # measurement of immunized arm;
+                                                  # ref[s] uncertainty propagates into x[s]
+
+    ## ---- Hierarchical serotype-specific intercept & slope ----------------
+    a[s]  ~ dnorm(mu_a,  tau_a)     # baseline log-rate at centered log-GMC = 0
+    b1[s] ~ dnorm(mu_b1, tau_b1)    # serotype slope, shrunk toward global mu_b1
+
+    ## ---- Poisson likelihood (offset = Total_Cases) -----------------------
+    # Unimmunized arm: centered log-GMC = 0 by construction.
+    log(lambda_u[s]) <- log(total_u[s]) + a[s]
+    cases_u[s] ~ dpois(lambda_u[s])
+
+    # Immunized arm: centered predictor x[s].
+    log(lambda_i[s]) <- log(total_i[s]) + a[s] + b1[s] * x[s]
+    cases_i[s] ~ dpois(lambda_i[s])
+
+    ## ---- Derived quantities ---------------------------------------------
+    rr[s] <- exp(b1[s])            # rate ratio per unit increase in centered log-GMC
+  }
+
+  ## ---- Hyperpriors --------------------------------------------------------
+  # Intercepts
+  mu_a ~ dnorm(0, 1.0E-4)
+  sigma_a ~ dnorm(0, 1) T(0,)      # half-normal(0,1)
+  tau_a <- pow(sigma_a, -2)
+
+  # Slopes: mu_b1 is the POOLED correlate of protection (log rate-ratio per
+  # unit of centered log-GMC).
+  mu_b1 ~ dnorm(0, 1.0E-4)
+  sigma_b1 ~ dnorm(0, 1) T(0,)     # half-normal(0,1)
+  tau_b1 <- pow(sigma_b1, -2)
+
+  # Population distribution of the true centered log-GMC (immunized arm).
+  mu_x ~ dnorm(0, 1.0E-4)
+  sigma_x ~ dnorm(0, 1) T(0,)
+  tau_x <- pow(sigma_x, -2)
+
+  ## Global summaries
+  rr_global <- exp(mu_b1)          # pooled rate ratio per unit centered log-GMC
+}
