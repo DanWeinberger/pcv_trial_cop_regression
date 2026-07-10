@@ -88,8 +88,10 @@ out <- data.frame(
   Vaccine_Status = ifelse(both$Vaccine_Arm == "Immunized", ">=1 dose", "PCV7 comparator"),
   Cases          = both$Cases,
   Total_Cases    = both$Total_Cases,
+  N_immuno       = both$N_immuno,   # analyzed immunogenicity population (for SD EIV)
   stringsAsFactors = FALSE
 )
+stopifnot(!any(is.na(out$N_immuno)))
 so  <- suppressWarnings(as.numeric(gsub("[^0-9].*$", "", out$Serotype)))
 out <- out[order(out$Study, out$Vaccine_Arm, so, out$Serotype), ]
 

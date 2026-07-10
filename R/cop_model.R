@@ -114,6 +114,18 @@ ASYM_TOL <- 0.10   # flag |asymmetry| > 10%
 #   data_file       : merged CSV (serotype x arm x study rows)
 #   predictor_study : value of the `Study` column supplying the immunogenicity
 #                     GMCs used as the predictor (e.g. "NCKP", "Am_Indian").
+#   predictor_error : "se" (default) uses the SE of the mean log-GMC, i.e. the
+#                     reported 95% CI taken at face value - the EIV precision
+#                     reflects how well the GROUP MEAN is known. "sd" instead
+#                     scales that SE up to the individual-level population SD
+#                     (SD = SE * sqrt(N_immuno), the analyzed immunogenicity
+#                     sample size), so the EIV layer absorbs subject-to-subject
+#                     titer heterogeneity rather than just sampling error of
+#                     the mean - this is the more conservative choice for a
+#                     COP claimed at the individual level, and it widens the
+#                     predictor error a lot (heavier attenuation of the slope).
+#                     Requires an `N_immuno` column in data_file; not all
+#                     merged CSVs carry one yet.
 #   quiet           : suppress the diagnostic messages (asymmetry / SE floor).
 #
 # The outcome (Cases / Total_Cases) travels in the same rows; subsetting by
@@ -121,11 +133,17 @@ ASYM_TOL <- 0.10   # flag |asymmetry| > 10%
 # case counts that study's rows carry. Returns a list with the JAGS data plus
 # the aligned per-arm data frames and derived quantities used for plotting.
 # ---------------------------------------------------------------------
-prepare_cop_data <- function(data_file, predictor_study, quiet = FALSE) {
+prepare_cop_data <- function(data_file, predictor_study,
+                             predictor_error = c("se", "sd"), quiet = FALSE) {
+  predictor_error <- match.arg(predictor_error)
   d <- read.csv(data_file, stringsAsFactors = FALSE)
   d <- subset(d, Study == predictor_study)
   if (nrow(d) == 0) {
     stop(sprintf("No rows with Study == '%s' in %s", predictor_study, data_file))
+  }
+  if (predictor_error == "sd" && is.null(d$N_immuno)) {
+    stop("predictor_error = 'sd' requires an N_immuno column (analyzed ",
+         "immunogenicity sample size) in ", data_file)
   }
 
   u <- subset(d, Vaccine_Arm == "Unimmunized")
@@ -164,12 +182,31 @@ prepare_cop_data <- function(data_file, predictor_study, quiet = FALSE) {
   se_u <- pmax(se_u, SE_FLOOR)
   se_i <- pmax(se_i, SE_FLOOR)
 
+  # se_u/se_i (reported CI -> SE of the mean) stay as-is for plotting - the
+  # measurement-error bars always show what was actually reported. The EIV
+  # precision fed to JAGS uses a separate, possibly-scaled sd_u/sd_i so the
+  # two never get confused with each other.
+  sd_u <- se_u
+  sd_i <- se_i
+  if (predictor_error == "sd") {
+    if (any(is.na(u$N_immuno)) || any(is.na(i$N_immuno))) {
+      stop("N_immuno is NA for one or more serotypes in ", data_file)
+    }
+    sd_u <- se_u * sqrt(u$N_immuno)
+    sd_i <- se_i * sqrt(i$N_immuno)
+    if (!quiet) {
+      message("Note: predictor_error = 'sd' - EIV precision uses SE * sqrt(N_immuno) ",
+              "(population spread of individual log-titers, not the SE of the mean). ",
+              "Plotted measurement-error bars still show the reported 95% CI.")
+    }
+  }
+
   jags_data <- list(
     S       = S,
     cases_u = u$Cases,    total_u = u$Total_Cases,
     cases_i = i$Cases,    total_i = i$Total_Cases,
-    lgmc_u  = log(u$GMC), prec_u  = 1 / se_u^2,
-    lgmc_i  = log(i$GMC), prec_i  = 1 / se_i^2
+    lgmc_u  = log(u$GMC), prec_u  = 1 / sd_u^2,
+    lgmc_i  = log(i$GMC), prec_i  = 1 / sd_i^2
   )
 
   list(
@@ -177,6 +214,7 @@ prepare_cop_data <- function(data_file, predictor_study, quiet = FALSE) {
     serotypes = serotypes, S = S,
     u = u, i = i,
     se_u = se_u, se_i = se_i,
+    predictor_error = predictor_error,
     x_obs = log(i$GMC) - log(u$GMC),        # observed centered log-GMC (immunized)
     flagged = flagged
   )
