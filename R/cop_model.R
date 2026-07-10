@@ -366,117 +366,6 @@ slope_summary <- function(samp, prep, analysis_id, predictor_label, outcome_labe
 }
 
 # ---------------------------------------------------------------------
-# plot_cop(): fitted case-proportion curves vs centered log-GMC.
-#   y = exp(a[s] + b1[s]*x) = expected proportion of cases (log scale)
-#   x = centered log-GMC; x = 0 is the unimmunized reference
-# Coloured lines = serotype-specific fits, black line = global (pooled) fit
-# with 95% credible band; points = observed proportions with 95% GMC
-# measurement-error bars. Saves cop_fit_proportion.pdf (+ .png if ggplot2).
-# ---------------------------------------------------------------------
-plot_cop <- function(prep, samp, out_dir, title_suffix = "") {
-  has_ggplot <- requireNamespace("ggplot2", quietly = TRUE)
-
-  serotypes <- prep$serotypes
-  S <- prep$S
-  u <- prep$u; i <- prep$i
-  x_obs  <- prep$x_obs
-  prop_u <- u$Cases / u$Total_Cases
-  prop_i <- i$Cases / i$Total_Cases
-  # unimmunized point at x=0 with its own SE; immunized combines both arms.
-  se_x <- c(prep$se_u, sqrt(prep$se_i^2 + prep$se_u^2))
-
-  M <- as.matrix(samp)
-  post_mean <- function(par) mean(M[, par])
-  a_hat  <- vapply(seq_len(S), function(s) post_mean(sprintf("a[%d]",  s)), numeric(1))
-  b1_hat <- vapply(seq_len(S), function(s) post_mean(sprintf("b1[%d]", s)), numeric(1))
-  mu_b1  <- post_mean("mu_b1")
-
-  slope_labels <- setNames(sprintf("%s  (b1 = %+.2f)", serotypes, b1_hat), serotypes)
-
-  xr <- range(c(0, x_obs))
-  xg <- seq(xr[1] - 0.2, xr[2] + 0.2, length.out = 200)
-
-  fit_s <- data.frame(
-    Serotype = rep(serotypes, each = length(xg)),
-    x        = rep(xg, times = S),
-    prop     = as.vector(sapply(seq_len(S), function(s) exp(a_hat[s] + b1_hat[s] * xg)))
-  )
-  xg_mat    <- outer(M[, "mu_a"], rep(1, length(xg))) + outer(M[, "mu_b1"], xg)
-  glob_draw <- exp(xg_mat)
-  fit_glob <- data.frame(
-    x   = xg,
-    med = apply(glob_draw, 2, median),
-    lo  = apply(glob_draw, 2, quantile, 0.025),
-    hi  = apply(glob_draw, 2, quantile, 0.975)
-  )
-  obs <- data.frame(
-    Serotype = rep(serotypes, 2),
-    Arm      = rep(c("Unimmunized", "Immunized"), each = S),
-    x        = c(rep(0, S), x_obs),
-    prop     = c(prop_u, prop_i),
-    xlo      = c(rep(0, S), x_obs) - qnorm(0.975) * se_x,
-    xhi      = c(rep(0, S), x_obs) + qnorm(0.975) * se_x
-  )
-
-  main_title <- "Correlate of protection: fitted case proportion vs centered log-GMC"
-  if (nzchar(title_suffix)) main_title <- paste0(main_title, "\n", title_suffix)
-
-  if (has_ggplot) {
-    library(ggplot2)
-    p <- ggplot() +
-      geom_ribbon(data = fit_glob, aes(x = x, ymin = lo, ymax = hi),
-                  fill = "grey60", alpha = 0.25) +
-      geom_line(data = fit_s, aes(x = x, y = prop, colour = Serotype), size = 0.7) +
-      geom_line(data = fit_glob, aes(x = x, y = med), colour = "black", size = 1.3) +
-      geom_errorbarh(data = obs, aes(y = prop, xmin = xlo, xmax = xhi, colour = Serotype),
-                     height = 0, alpha = 0.7) +
-      geom_point(data = obs, aes(x = x, y = prop, colour = Serotype, shape = Arm), size = 2.6) +
-      scale_shape_manual(values = c(Unimmunized = 1, Immunized = 16)) +
-      scale_colour_discrete(labels = slope_labels) +
-      scale_y_log10() +
-      geom_vline(xintercept = 0, linetype = "dotted", colour = "grey50") +
-      labs(
-        x = "Centered log-GMC  (immunized - unimmunized reference)",
-        y = "Expected proportion of cases  ( lambda / Total_Cases, log scale )",
-        colour = "Serotype (slope b1)",
-        title = main_title,
-        subtitle = sprintf(paste0("Coloured lines = serotype-specific fits; ",
-                                  "black line = global (pooled) fit, b1 = %+.2f, 95%% CrI; ",
-                                  "bars = 95%% GMC measurement error"), mu_b1)
-      ) +
-      theme_bw(base_size = 12) +
-      theme(legend.position = "right")
-    ggsave(file.path(out_dir, "cop_fit_proportion.pdf"), p, width = 9, height = 6)
-    ggsave(file.path(out_dir, "cop_fit_proportion.png"), p, width = 9, height = 6, dpi = 150)
-  } else {
-    cols <- setNames(rainbow(S), serotypes)
-    pdf(file.path(out_dir, "cop_fit_proportion.pdf"), width = 9, height = 6)
-    ylim <- range(c(fit_s$prop, obs$prop, fit_glob$hi))
-    ylim[1] <- max(ylim[1], min(obs$prop[obs$prop > 0]) / 2)
-    plot(NA, xlim = range(xg), ylim = ylim, log = "y",
-         xlab = "Centered log-GMC (immunized - unimmunized reference)",
-         ylab = "Expected proportion of cases (lambda / Total_Cases, log scale)",
-         main = main_title)
-    polygon(c(fit_glob$x, rev(fit_glob$x)), c(fit_glob$lo, rev(fit_glob$hi)),
-            col = adjustcolor("grey60", 0.25), border = NA)
-    for (s in seq_len(S)) lines(xg, exp(a_hat[s] + b1_hat[s] * xg), col = cols[s], lwd = 1.5)
-    lines(fit_glob$x, fit_glob$med, col = "black", lwd = 3)
-    abline(v = 0, lty = 3, col = "grey50")
-    arrows(obs$xlo, obs$prop, obs$xhi, obs$prop, code = 3, angle = 90,
-           length = 0.03, col = rep(cols, 2))
-    points(0 * seq_len(S), prop_u, col = cols, pch = 1, cex = 1.3)
-    points(x_obs, prop_i, col = cols, pch = 16, cex = 1.3)
-    legend("topright", legend = slope_labels, col = cols, lwd = 1.5,
-           title = "Serotype (slope b1)", bty = "n", cex = 0.8)
-    legend("top", legend = c("Global (pooled)", "Unimmunized (x=0)", "Immunized"),
-           col = c("black", "grey30", "grey30"), lwd = c(3, NA, NA),
-           pch = c(NA, 1, 16), bty = "n", cex = 0.8)
-    dev.off()
-  }
-  invisible(NULL)
-}
-
-# ---------------------------------------------------------------------
 # plot_cop_scatter(): the correlate-of-protection relationship in its natural
 # "ratio" coordinates - one point per serotype:
 #
@@ -492,9 +381,8 @@ plot_cop <- function(prep, samp, out_dir, title_suffix = "") {
 #
 # Overlaid: the fitted GLOBAL relationship log RR = mu_b1 * log GMR - a line
 # THROUGH THE ORIGIN (the serotype intercept a[s] cancels in the ratio), with a
-# 95% credible band from the posterior of mu_b1. Saves cop_scatter_gmr_rr.pdf
-# (+ .png if ggplot2). Consumes only canonical names, so it is
-# parameterization-agnostic.
+# 95% credible band from the posterior of mu_b1. Saves cop_scatter_gmr_rr.png.
+# Consumes only canonical names, so it is parameterization-agnostic.
 # ---------------------------------------------------------------------
 plot_cop_scatter <- function(prep, samp, out_dir, title_suffix = "") {
   has_ggplot <- requireNamespace("ggplot2", quietly = TRUE)
@@ -573,11 +461,10 @@ plot_cop_scatter <- function(prep, samp, out_dir, title_suffix = "") {
       ) +
       theme_bw(base_size = 12) +
       theme(legend.position = "right")
-    ggsave(file.path(out_dir, "cop_scatter_gmr_rr.pdf"), p, width = 9, height = 6)
     ggsave(file.path(out_dir, "cop_scatter_gmr_rr.png"), p, width = 9, height = 6, dpi = 150)
   } else {
     cols <- setNames(rainbow(S), serotypes)
-    pdf(file.path(out_dir, "cop_scatter_gmr_rr.pdf"), width = 9, height = 6)
+    png(file.path(out_dir, "cop_scatter_gmr_rr.png"), width = 9, height = 6, units = "in", res = 150)
     xlim <- range(c(pts$xlo, pts$xhi, xg))
     ylim <- range(c(pts$ylo, pts$yhi, fit_glob$lo, fit_glob$hi))
     plot(NA, xlim = xlim, ylim = ylim,

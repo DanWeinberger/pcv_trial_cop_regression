@@ -22,7 +22,7 @@
 #
 # For each analysis <id> it writes results/<id>/:
 #   posterior_summary.csv  mcmc.rds  diagnostics.pdf
-#   cop_fit_proportion.pdf (+ .png)  cop_scatter_gmr_rr.pdf (+ .png)
+#   cop_scatter_gmr_rr.png
 #   slope_summary.csv
 #
 # All modelling logic lives in R/cop_model.R; the registry in R/config.R
@@ -69,8 +69,6 @@ invisible(lapply(ids, function(id) {
   prep <- prepare_cop_data(cfg$data_file, cfg$predictor_study,
                            predictor_error = predictor_error)
   fit  <- fit_cop(prep, out_dir, parameterization = parameterization)
-  plot_cop(prep, fit$samp, out_dir,
-           title_suffix = sprintf("Predictor: %s", cfg$predictor_label))
   plot_cop_scatter(prep, fit$samp, out_dir,
                    title_suffix = sprintf("Predictor: %s", cfg$predictor_label))
   slope_summary(fit$samp, prep, id, cfg$predictor_label, cfg$outcome_label,

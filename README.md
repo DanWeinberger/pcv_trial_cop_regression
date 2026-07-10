@@ -10,7 +10,7 @@ serotype intercepts and slopes. The global slope `mu_b1` is the pooled COP.
 | Path | Role |
 |------|------|
 | `JAGS/cop_eiv_model.jags` | The Bayesian model (unchanged across analyses). |
-| `R/cop_model.R` | Reusable engine: `prepare_cop_data()`, `fit_cop()`, `plot_cop()`, `slope_summary()`. No analysis is hard-coded here. |
+| `R/cop_model.R` | Reusable engine: `prepare_cop_data()`, `fit_cop()`, `plot_cop_scatter()`, `slope_summary()`. No analysis is hard-coded here. |
 | `R/config.R` | **The only file you edit to add a comparison.** Registry of `ANALYSES` (outcome + predictor) and `COMPARISONS` (sets of analyses whose slopes are contrasted). |
 | `R/run_analysis.R` | Driver: fit + plot + summarise one or more analyses. |
 | `R/compare_slopes.R` | Contrast the global slope `mu_b1` across analyses in a comparison. |
@@ -27,7 +27,7 @@ Rscript R/compare_slopes.R predictor_source   # one comparison by id
 ```
 
 Each `results/<id>/` gets: `posterior_summary.csv`, `mcmc.rds`,
-`diagnostics.pdf`, `cop_fit_proportion.pdf`/`.png`, `slope_summary.csv`.
+`diagnostics.pdf`, `cop_scatter_gmr_rr.png`, `slope_summary.csv`.
 Each `results/comparisons/<id>/` gets, at the **global** slope level:
 `slopes_by_analysis.csv`, `slope_pairwise_diffs.csv`, `slope_forest.pdf`/`.png`,
 `slope_overlay.pdf`/`.png`; and at the **per-serotype** slope level:
