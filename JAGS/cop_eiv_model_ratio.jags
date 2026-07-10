@@ -1,0 +1,82 @@
+## Bayesian error-in-variables Poisson regression for a pneumococcal
+## correlate of protection (COP) -- RATIO PARAMETERIZATION.
+##
+## This is an algebraically equivalent re-expression of cop_eiv_model.jags. The
+## COP relationship is written directly as a regression of the log ratio of case
+## proportions on the log ratio of GMCs, one point per serotype:
+##
+##       log( p1[s] / p0[s] )  =  b1[s] * log( GMC1[s] / GMC0[s] )
+##
+##   p0[s], p1[s]   proportion of cases in the unimmunized / immunized arm
+##   GMC0[s],GMC1[s] geometric-mean concentration in the unimmunized / immunized arm
+##
+## The proportions are NOT observed directly: they are the Poisson rates of the
+## two arms (offset = arm-specific Total_Cases), so the arm count likelihood is
+## retained and supplies the sampling uncertainty in the proportions. The two
+## GMCs are measured with error (precision from the 95% CI), so the log-ratio
+## predictor is an error-in-variables quantity.
+##
+## Data list is IDENTICAL to cop_eiv_model.jags:
+##   cases_u[s], cases_i[s]  observed serotype-specific IPD case counts
+##   total_u[s], total_i[s]  offsets (Total_Cases)
+##   lgmc_u[s], lgmc_i[s]    OBSERVED log-GMC in each arm
+##   prec_u[s], prec_i[s]    measurement precision of the observed log-GMC
+##
+## Name mapping to the original model:
+##   logp0[s] <-> a[s]      mu_p0 <-> mu_a      sigma_p0 <-> sigma_a
+##   lrgmc[s] <-> x[s]      mu_lr <-> mu_x      sigma_lr <-> sigma_x
+##   g0[s]    <-> ref[s]    b1/mu_b1/rr/rr_global are unchanged.
+
+model {
+  for (s in 1:S) {
+
+    ## ---- Error-in-variables model for the two GMCs -----------------------
+    # latent TRUE log-GMC in the unimmunized arm = log(GMC0).
+    g0[s] ~ dnorm(0, 1.0E-4)
+    lgmc_u[s] ~ dnorm(g0[s], prec_u[s])           # noisy measurement of log(GMC0)
+
+    # latent TRUE log ratio of GMCs = log(GMC1 / GMC0). Regularized by a
+    # weakly-informative population distribution (matches mu_x/tau_x in the
+    # original). The immunized true log-GMC is then g0[s] + lrgmc[s], so the
+    # unimmunized measurement error propagates into the ratio predictor.
+    lrgmc[s] ~ dnorm(mu_lr, tau_lr)
+    lgmc_i[s] ~ dnorm(g0[s] + lrgmc[s], prec_i[s]) # noisy measurement of log(GMC1)
+
+    ## ---- Hierarchical serotype-specific baseline & slope -----------------
+    logp0[s] ~ dnorm(mu_p0, tau_p0)   # log proportion of cases, unimmunized arm
+    b1[s]    ~ dnorm(mu_b1, tau_b1)   # serotype slope, shrunk toward global mu_b1
+
+    # THE COP REGRESSION, in ratio form (no intercept: p1 = p0 when GMCs equal):
+    #   log(p1/p0) = b1 * log(GMC1/GMC0)
+    logp1[s] <- logp0[s] + b1[s] * lrgmc[s]
+
+    ## ---- Poisson likelihood for the two arms (offset = Total_Cases) -------
+    log(lambda_u[s]) <- log(total_u[s]) + logp0[s]
+    log(lambda_i[s]) <- log(total_i[s]) + logp1[s]
+    cases_u[s] ~ dpois(lambda_u[s])
+    cases_i[s] ~ dpois(lambda_i[s])
+
+    ## ---- Derived quantities ---------------------------------------------
+    rr[s] <- exp(b1[s])            # rate ratio per unit increase in log(GMC1/GMC0)
+  }
+
+  ## ---- Hyperpriors --------------------------------------------------------
+  # Baseline (unimmunized) log proportions.
+  mu_p0 ~ dnorm(0, 1.0E-4)
+  sigma_p0 ~ dnorm(0, 1) T(0,)     # half-normal(0,1)
+  tau_p0 <- pow(sigma_p0, -2)
+
+  # Slopes: mu_b1 is the POOLED correlate of protection (log rate-ratio per
+  # unit of log-GMC ratio).
+  mu_b1 ~ dnorm(0, 1.0E-4)
+  sigma_b1 ~ dnorm(0, 1) T(0,)     # half-normal(0,1)
+  tau_b1 <- pow(sigma_b1, -2)
+
+  # Population distribution of the true log-GMC ratio.
+  mu_lr ~ dnorm(0, 1.0E-4)
+  sigma_lr ~ dnorm(0, 1) T(0,)
+  tau_lr <- pow(sigma_lr, -2)
+
+  ## Global summary
+  rr_global <- exp(mu_b1)          # pooled rate ratio per unit log-GMC ratio
+}

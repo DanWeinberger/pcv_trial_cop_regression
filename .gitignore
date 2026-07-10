@@ -1,0 +1,9 @@
+# Raw WISSPAR export snapshot (~4 MB). Re-fetched on demand by
+# R/build_wisspar_head2head.R; only the small filtered slices are committed.
+data/wisspar_export.json
+
+# R session cruft
+.Rhistory
+.RData
+.Rproj.user/
+data/run_out.log

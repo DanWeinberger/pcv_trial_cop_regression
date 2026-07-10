@@ -1,0 +1,109 @@
+"Table","Vaccine","Serotype","VE_Measure","Age_Range","Vaccine_Status","Cases","Total_Cases"
+"Table1","PCV7","PCV7 serotypes + 6A","at least one dose","74 to 729 days","Vaccinated",20,114
+"Table1","PCV7","PCV7 serotypes + 6A","at least one dose","74 to 729 days","Unvaccinated",81,141
+"Table1","PCV7","PCV7 serotypes + 6A","post primary","74 to 729 days","Vaccinated",1,39
+"Table1","PCV7","PCV7 serotypes + 6A","post primary","74 to 729 days","Unvaccinated",49,76
+"Table1","PCV7","PCV7 serotypes + 6A","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","PCV7 serotypes + 6A","post booster","74 to 729 days","Unvaccinated",44,63
+"Table1","PCV7","4","at least one dose","74 to 729 days","Vaccinated",0,94
+"Table1","PCV7","4","at least one dose","74 to 729 days","Unvaccinated",1,61
+"Table1","PCV7","4","post primary","74 to 729 days","Vaccinated",0,38
+"Table1","PCV7","4","post primary","74 to 729 days","Unvaccinated",1,28
+"Table1","PCV7","4","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","4","post booster","74 to 729 days","Unvaccinated",1,20
+"Table1","PCV7","6B","at least one dose","74 to 729 days","Vaccinated",2,96
+"Table1","PCV7","6B","at least one dose","74 to 729 days","Unvaccinated",20,80
+"Table1","PCV7","6B","post primary","74 to 729 days","Vaccinated",0,38
+"Table1","PCV7","6B","post primary","74 to 729 days","Unvaccinated",15,42
+"Table1","PCV7","6B","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","6B","post booster","74 to 729 days","Unvaccinated",14,33
+"Table1","PCV7","9V","at least one dose","74 to 729 days","Vaccinated",0,94
+"Table1","PCV7","9V","at least one dose","74 to 729 days","Unvaccinated",4,64
+"Table1","PCV7","9V","post primary","74 to 729 days","Vaccinated",0,38
+"Table1","PCV7","9V","post primary","74 to 729 days","Unvaccinated",2,29
+"Table1","PCV7","9V","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","9V","post booster","74 to 729 days","Unvaccinated",2,21
+"Table1","PCV7","14","at least one dose","74 to 729 days","Vaccinated",2,96
+"Table1","PCV7","14","at least one dose","74 to 729 days","Unvaccinated",24,84
+"Table1","PCV7","14","post primary","74 to 729 days","Vaccinated",0,38
+"Table1","PCV7","14","post primary","74 to 729 days","Unvaccinated",12,39
+"Table1","PCV7","14","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","14","post booster","74 to 729 days","Unvaccinated",15,34
+"Table1","PCV7","18C","at least one dose","74 to 729 days","Vaccinated",4,98
+"Table1","PCV7","18C","at least one dose","74 to 729 days","Unvaccinated",6,66
+"Table1","PCV7","18C","post primary","74 to 729 days","Vaccinated",0,38
+"Table1","PCV7","18C","post primary","74 to 729 days","Unvaccinated",3,30
+"Table1","PCV7","18C","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","18C","post booster","74 to 729 days","Unvaccinated",4,23
+"Table1","PCV7","19F","at least one dose","74 to 729 days","Vaccinated",5,99
+"Table1","PCV7","19F","at least one dose","74 to 729 days","Unvaccinated",11,71
+"Table1","PCV7","19F","post primary","74 to 729 days","Vaccinated",1,39
+"Table1","PCV7","19F","post primary","74 to 729 days","Unvaccinated",6,33
+"Table1","PCV7","19F","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","19F","post booster","74 to 729 days","Unvaccinated",4,23
+"Table1","PCV7","23F","at least one dose","74 to 729 days","Vaccinated",3,97
+"Table1","PCV7","23F","at least one dose","74 to 729 days","Unvaccinated",8,68
+"Table1","PCV7","23F","post primary","74 to 729 days","Vaccinated",0,38
+"Table1","PCV7","23F","post primary","74 to 729 days","Unvaccinated",6,33
+"Table1","PCV7","23F","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","23F","post booster","74 to 729 days","Unvaccinated",3,22
+"Table1","PCV7","6A","at least one dose","74 to 729 days","Vaccinated",4,98
+"Table1","PCV7","6A","at least one dose","74 to 729 days","Unvaccinated",7,67
+"Table1","PCV7","6A","post primary","74 to 729 days","Vaccinated",0,38
+"Table1","PCV7","6A","post primary","74 to 729 days","Unvaccinated",4,31
+"Table1","PCV7","6A","post booster","74 to 729 days","Vaccinated",0,11
+"Table1","PCV7","6A","post booster","74 to 729 days","Unvaccinated",1,20
+"Table2","PCV13","PCV13 serotypes","at least one dose","74 to 729 days","Vaccinated",25,219
+"Table2","PCV13","PCV13 serotypes","at least one dose","74 to 729 days","Unvaccinated",55,98
+"Table2","PCV13","PCV13 serotypes","post primary","74 to 729 days","Vaccinated",10,84
+"Table2","PCV13","PCV13 serotypes","post primary","74 to 729 days","Unvaccinated",22,42
+"Table2","PCV13","PCV13 serotypes","post booster","74 to 729 days","Vaccinated",2,35
+"Table2","PCV13","PCV13 serotypes","post booster","74 to 729 days","Unvaccinated",13,29
+"Table2","PCV13","PCV13-non-PCV7 serotypes","at least one dose","74 to 729 days","Vaccinated",23,217
+"Table2","PCV13","PCV13-non-PCV7 serotypes","at least one dose","74 to 729 days","Unvaccinated",43,86
+"Table2","PCV13","PCV13-non-PCV7 serotypes","post primary","74 to 729 days","Vaccinated",10,84
+"Table2","PCV13","PCV13-non-PCV7 serotypes","post primary","74 to 729 days","Unvaccinated",16,36
+"Table2","PCV13","PCV13-non-PCV7 serotypes","post booster","74 to 729 days","Vaccinated",2,35
+"Table2","PCV13","PCV13-non-PCV7 serotypes","post booster","74 to 729 days","Unvaccinated",12,28
+"Table2","PCV13","PCV7 serotypes in PCV13","at least one dose","74 to 729 days","Vaccinated",2,196
+"Table2","PCV13","PCV7 serotypes in PCV13","at least one dose","74 to 729 days","Unvaccinated",12,55
+"Table2","PCV13","PCV7 serotypes in PCV13","post primary","74 to 729 days","Vaccinated",0,74
+"Table2","PCV13","PCV7 serotypes in PCV13","post primary","74 to 729 days","Unvaccinated",6,26
+"Table2","PCV13","PCV7 serotypes in PCV13","post booster","74 to 729 days","Vaccinated",0,33
+"Table2","PCV13","PCV7 serotypes in PCV13","post booster","74 to 729 days","Unvaccinated",1,17
+"Table2","PCV13","1","at least one dose","74 to 729 days","Vaccinated",2,196
+"Table2","PCV13","1","at least one dose","74 to 729 days","Unvaccinated",5,48
+"Table2","PCV13","1","post primary","74 to 729 days","Vaccinated",1,75
+"Table2","PCV13","1","post primary","74 to 729 days","Unvaccinated",2,22
+"Table2","PCV13","1","post booster","74 to 729 days","Vaccinated",0,33
+"Table2","PCV13","1","post booster","74 to 729 days","Unvaccinated",1,17
+"Table2","PCV13","3","at least one dose","74 to 729 days","Vaccinated",6,200
+"Table2","PCV13","3","at least one dose","74 to 729 days","Unvaccinated",5,48
+"Table2","PCV13","3","post primary","74 to 729 days","Vaccinated",1,75
+"Table2","PCV13","3","post primary","74 to 729 days","Unvaccinated",2,22
+"Table2","PCV13","3","post booster","74 to 729 days","Vaccinated",1,34
+"Table2","PCV13","3","post booster","74 to 729 days","Unvaccinated",2,18
+"Table2","PCV13","5","at least one dose","74 to 729 days","Vaccinated",0,194
+"Table2","PCV13","5","at least one dose","74 to 729 days","Unvaccinated",0,43
+"Table2","PCV13","5","post primary","74 to 729 days","Vaccinated",0,74
+"Table2","PCV13","5","post primary","74 to 729 days","Unvaccinated",0,20
+"Table2","PCV13","5","post booster","74 to 729 days","Vaccinated",0,33
+"Table2","PCV13","5","post booster","74 to 729 days","Unvaccinated",0,16
+"Table2","PCV13","6A","at least one dose","74 to 729 days","Vaccinated",0,194
+"Table2","PCV13","6A","at least one dose","74 to 729 days","Unvaccinated",4,47
+"Table2","PCV13","6A","post primary","74 to 729 days","Vaccinated",0,74
+"Table2","PCV13","6A","post primary","74 to 729 days","Unvaccinated",1,21
+"Table2","PCV13","6A","post booster","74 to 729 days","Vaccinated",0,33
+"Table2","PCV13","6A","post booster","74 to 729 days","Unvaccinated",2,18
+"Table2","PCV13","7F","at least one dose","74 to 729 days","Vaccinated",1,195
+"Table2","PCV13","7F","at least one dose","74 to 729 days","Unvaccinated",12,55
+"Table2","PCV13","7F","post primary","74 to 729 days","Vaccinated",0,74
+"Table2","PCV13","7F","post primary","74 to 729 days","Unvaccinated",2,22
+"Table2","PCV13","7F","post booster","74 to 729 days","Vaccinated",0,33
+"Table2","PCV13","7F","post booster","74 to 729 days","Unvaccinated",0,16
+"Table2","PCV13","19A","at least one dose","74 to 729 days","Vaccinated",14,208
+"Table2","PCV13","19A","at least one dose","74 to 729 days","Unvaccinated",17,60
+"Table2","PCV13","19A","post primary","74 to 729 days","Vaccinated",8,82
+"Table2","PCV13","19A","post primary","74 to 729 days","Unvaccinated",9,29
+"Table2","PCV13","19A","post booster","74 to 729 days","Vaccinated",1,34
+"Table2","PCV13","19A","post booster","74 to 729 days","Unvaccinated",7,23
