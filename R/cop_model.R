@@ -538,12 +538,13 @@ plot_cop_scatter <- function(prep, samp, out_dir, title_suffix = "") {
     ylo = logRR  - z * se_rr,  yhi = logRR  + z * se_rr,
     zero = zero, stringsAsFactors = FALSE
   )
-  slope_labels <- setNames(sprintf("%s  (b1 = %+.2f)", serotypes, b1_hat), serotypes)
+  slope_labels <- setNames(sprintf("%s  (post. b1 = %+.2f)", serotypes, b1_hat), serotypes)
 
   main_title <- "Correlate of protection: log rate-ratio vs log GMC-ratio"
   if (nzchar(title_suffix)) main_title <- paste0(main_title, "\n", title_suffix)
   subt <- sprintf(paste0("Points = observed serotypes; bars = 95%% CI on both axes; ",
-                         "line = global fit through origin, b1 = %+.2f (95%% CrI)"), mu_b1)
+                         "dotted lines = each serotype's own observed slope (logRR/logGMR); ",
+                         "black line = global fit through origin, b1 = %+.2f (95%% CrI)"), mu_b1)
   cap <- if (any(zero))
     "Open symbols: an arm has zero cases; log RR uses a 0.5 continuity correction." else NULL
 
@@ -555,6 +556,8 @@ plot_cop_scatter <- function(prep, samp, out_dir, title_suffix = "") {
       geom_hline(yintercept = 0, linetype = "dotted", colour = "grey50") +
       geom_vline(xintercept = 0, linetype = "dotted", colour = "grey50") +
       geom_line(data = fit_glob, aes(x = x, y = med), colour = "black", linewidth = 1.2) +
+      geom_segment(data = pts, aes(x = 0, y = 0, xend = x, yend = y, colour = Serotype),
+                   linetype = "dotted", alpha = 0.5, linewidth = 0.5) +
       geom_errorbarh(data = pts, aes(y = y, xmin = xlo, xmax = xhi, colour = Serotype),
                      height = 0, alpha = 0.7) +
       geom_errorbar(data = pts, aes(x = x, ymin = ylo, ymax = yhi, colour = Serotype),
@@ -585,6 +588,7 @@ plot_cop_scatter <- function(prep, samp, out_dir, title_suffix = "") {
             col = adjustcolor("grey60", 0.25), border = NA)
     abline(h = 0, v = 0, lty = 3, col = "grey50")
     lines(fit_glob$x, fit_glob$med, col = "black", lwd = 2)
+    segments(0, 0, pts$x, pts$y, col = adjustcolor(cols, alpha.f = 0.5), lty = 3)
     arrows(pts$xlo, pts$y, pts$xhi, pts$y, code = 3, angle = 90, length = 0.03, col = cols)
     arrows(pts$x, pts$ylo, pts$x, pts$yhi, code = 3, angle = 90, length = 0.03, col = cols)
     points(pts$x, pts$y, col = cols, pch = ifelse(pts$zero, 1, 16), cex = 1.3)

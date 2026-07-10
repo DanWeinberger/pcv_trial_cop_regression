@@ -1,43 +1,43 @@
-"Study","Vaccine_Arm","Serotype","GMC","Lower_CL","Upper_CL","vaccine_group","Vaccine_Status","Cases","Total_Cases"
-"NCKP","Immunized","4",1.36,1.2,1.56,"vaccinated",">=1 dose",2,1419
-"NCKP","Immunized","6B",3.34,2.75,4.05,"vaccinated",">=1 dose",31,1448
-"NCKP","Immunized","9V",1.6,1.41,1.83,"vaccinated",">=1 dose",6,1423
-"NCKP","Immunized","14",4.68,4.07,5.4,"vaccinated",">=1 dose",9,1426
-"NCKP","Immunized","18C",1.96,1.71,2.25,"vaccinated",">=1 dose",8,1425
-"NCKP","Immunized","19F",1.44,1.26,1.65,"vaccinated",">=1 dose",20,1437
-"NCKP","Immunized","23F",1.44,1.22,1.7,"vaccinated",">=1 dose",11,1428
-"NCKP","Unimmunized","4",0.03,0.02,0.03,"unvaccinated","Unvaccinated",6,160
-"NCKP","Unimmunized","6B",0.08,0.07,0.09,"unvaccinated","Unvaccinated",22,176
-"NCKP","Unimmunized","9V",0.05,0.05,0.06,"unvaccinated","Unvaccinated",8,162
-"NCKP","Unimmunized","14",0.05,0.04,0.06,"unvaccinated","Unvaccinated",59,213
-"NCKP","Unimmunized","18C",0.04,0.04,0.05,"unvaccinated","Unvaccinated",12,166
-"NCKP","Unimmunized","19F",0.11,0.09,0.13,"unvaccinated","Unvaccinated",20,174
-"NCKP","Unimmunized","23F",0.05,0.04,0.06,"unvaccinated","Unvaccinated",16,170
-"Am_Indian","Immunized","4",2.96,2.68,3.27,"vaccinated",">=1 dose",2,1419
-"Am_Indian","Immunized","6B",3.19,2.74,3.72,"vaccinated",">=1 dose",31,1448
-"Am_Indian","Immunized","9V",1.67,1.53,1.84,"vaccinated",">=1 dose",6,1423
-"Am_Indian","Immunized","14",3.76,3.27,4.32,"vaccinated",">=1 dose",9,1426
-"Am_Indian","Immunized","18C",1.99,1.81,2.2,"vaccinated",">=1 dose",8,1425
-"Am_Indian","Immunized","19F",1.88,1.7,2.09,"vaccinated",">=1 dose",20,1437
-"Am_Indian","Immunized","23F",1.8,1.59,2.04,"vaccinated",">=1 dose",11,1428
-"Am_Indian","Unimmunized","4",0.03,0.03,0.03,"unvaccinated","Unvaccinated",6,160
-"Am_Indian","Unimmunized","6B",0.13,0.12,0.15,"unvaccinated","Unvaccinated",22,176
-"Am_Indian","Unimmunized","9V",0.11,0.1,0.12,"unvaccinated","Unvaccinated",8,162
-"Am_Indian","Unimmunized","14",0.03,0.03,0.04,"unvaccinated","Unvaccinated",59,213
-"Am_Indian","Unimmunized","18C",0.06,0.05,0.07,"unvaccinated","Unvaccinated",12,166
-"Am_Indian","Unimmunized","19F",0.24,0.21,0.27,"unvaccinated","Unvaccinated",20,174
-"Am_Indian","Unimmunized","23F",0.08,0.07,0.09,"unvaccinated","Unvaccinated",16,170
-"South_Africa","Immunized","4",4.37,3.83,4.99,"vaccinated",">=1 dose",2,1419
-"South_Africa","Immunized","6B",4.54,3.84,5.36,"vaccinated",">=1 dose",31,1448
-"South_Africa","Immunized","9V",2.37,2.12,2.65,"vaccinated",">=1 dose",6,1423
-"South_Africa","Immunized","14",3.99,3.37,4.71,"vaccinated",">=1 dose",9,1426
-"South_Africa","Immunized","18C",2.5,2.21,2.82,"vaccinated",">=1 dose",8,1425
-"South_Africa","Immunized","19F",3.91,3.48,4.39,"vaccinated",">=1 dose",20,1437
-"South_Africa","Immunized","23F",2.23,1.91,2.59,"vaccinated",">=1 dose",11,1428
-"South_Africa","Unimmunized","4",0.04,0.04,0.05,"unvaccinated","Unvaccinated",6,160
-"South_Africa","Unimmunized","6B",0.19,0.16,0.22,"unvaccinated","Unvaccinated",22,176
-"South_Africa","Unimmunized","9V",0.12,0.1,0.13,"unvaccinated","Unvaccinated",8,162
-"South_Africa","Unimmunized","14",0.19,0.16,0.22,"unvaccinated","Unvaccinated",59,213
-"South_Africa","Unimmunized","18C",0.07,0.06,0.08,"unvaccinated","Unvaccinated",12,166
-"South_Africa","Unimmunized","19F",0.29,0.25,0.33,"unvaccinated","Unvaccinated",20,174
-"South_Africa","Unimmunized","23F",0.1,0.08,0.11,"unvaccinated","Unvaccinated",16,170
+"Study","Vaccine_Arm","Serotype","GMC","Lower_CL","Upper_CL","N_immuno","vaccine_group","Vaccine_Status","Cases","Total_Cases"
+"NCKP","Immunized","4",1.36,1.2,1.56,190,"vaccinated",">=1 dose",2,1419
+"NCKP","Immunized","6B",3.34,2.75,4.05,190,"vaccinated",">=1 dose",31,1448
+"NCKP","Immunized","9V",1.6,1.41,1.83,190,"vaccinated",">=1 dose",6,1423
+"NCKP","Immunized","14",4.68,4.07,5.4,190,"vaccinated",">=1 dose",9,1426
+"NCKP","Immunized","18C",1.96,1.71,2.25,190,"vaccinated",">=1 dose",8,1425
+"NCKP","Immunized","19F",1.44,1.26,1.65,190,"vaccinated",">=1 dose",20,1437
+"NCKP","Immunized","23F",1.44,1.22,1.7,190,"vaccinated",">=1 dose",11,1428
+"NCKP","Unimmunized","4",0.03,0.02,0.03,189,"unvaccinated","Unvaccinated",6,160
+"NCKP","Unimmunized","6B",0.08,0.07,0.09,189,"unvaccinated","Unvaccinated",22,176
+"NCKP","Unimmunized","9V",0.05,0.05,0.06,189,"unvaccinated","Unvaccinated",8,162
+"NCKP","Unimmunized","14",0.05,0.04,0.06,189,"unvaccinated","Unvaccinated",59,213
+"NCKP","Unimmunized","18C",0.04,0.04,0.05,189,"unvaccinated","Unvaccinated",12,166
+"NCKP","Unimmunized","19F",0.11,0.09,0.13,189,"unvaccinated","Unvaccinated",20,174
+"NCKP","Unimmunized","23F",0.05,0.04,0.06,189,"unvaccinated","Unvaccinated",16,170
+"Am_Indian","Immunized","4",2.96,2.68,3.27,445,"vaccinated",">=1 dose",2,1419
+"Am_Indian","Immunized","6B",3.19,2.74,3.72,445,"vaccinated",">=1 dose",31,1448
+"Am_Indian","Immunized","9V",1.67,1.53,1.84,445,"vaccinated",">=1 dose",6,1423
+"Am_Indian","Immunized","14",3.76,3.27,4.32,445,"vaccinated",">=1 dose",9,1426
+"Am_Indian","Immunized","18C",1.99,1.81,2.2,445,"vaccinated",">=1 dose",8,1425
+"Am_Indian","Immunized","19F",1.88,1.7,2.09,445,"vaccinated",">=1 dose",20,1437
+"Am_Indian","Immunized","23F",1.8,1.59,2.04,445,"vaccinated",">=1 dose",11,1428
+"Am_Indian","Unimmunized","4",0.03,0.03,0.03,481,"unvaccinated","Unvaccinated",6,160
+"Am_Indian","Unimmunized","6B",0.13,0.12,0.15,481,"unvaccinated","Unvaccinated",22,176
+"Am_Indian","Unimmunized","9V",0.11,0.1,0.12,481,"unvaccinated","Unvaccinated",8,162
+"Am_Indian","Unimmunized","14",0.03,0.03,0.04,481,"unvaccinated","Unvaccinated",59,213
+"Am_Indian","Unimmunized","18C",0.06,0.05,0.07,481,"unvaccinated","Unvaccinated",12,166
+"Am_Indian","Unimmunized","19F",0.24,0.21,0.27,481,"unvaccinated","Unvaccinated",20,174
+"Am_Indian","Unimmunized","23F",0.08,0.07,0.09,481,"unvaccinated","Unvaccinated",16,170
+"South_Africa","Immunized","4",4.37,3.83,4.99,256,"vaccinated",">=1 dose",2,1419
+"South_Africa","Immunized","6B",4.54,3.84,5.36,256,"vaccinated",">=1 dose",31,1448
+"South_Africa","Immunized","9V",2.37,2.12,2.65,256,"vaccinated",">=1 dose",6,1423
+"South_Africa","Immunized","14",3.99,3.37,4.71,256,"vaccinated",">=1 dose",9,1426
+"South_Africa","Immunized","18C",2.5,2.21,2.82,256,"vaccinated",">=1 dose",8,1425
+"South_Africa","Immunized","19F",3.91,3.48,4.39,256,"vaccinated",">=1 dose",20,1437
+"South_Africa","Immunized","23F",2.23,1.91,2.59,256,"vaccinated",">=1 dose",11,1428
+"South_Africa","Unimmunized","4",0.04,0.04,0.05,302,"unvaccinated","Unvaccinated",6,160
+"South_Africa","Unimmunized","6B",0.19,0.16,0.22,302,"unvaccinated","Unvaccinated",22,176
+"South_Africa","Unimmunized","9V",0.12,0.1,0.13,302,"unvaccinated","Unvaccinated",8,162
+"South_Africa","Unimmunized","14",0.19,0.16,0.22,302,"unvaccinated","Unvaccinated",59,213
+"South_Africa","Unimmunized","18C",0.07,0.06,0.08,302,"unvaccinated","Unvaccinated",12,166
+"South_Africa","Unimmunized","19F",0.29,0.25,0.33,302,"unvaccinated","Unvaccinated",20,174
+"South_Africa","Unimmunized","23F",0.1,0.08,0.11,302,"unvaccinated","Unvaccinated",16,170
