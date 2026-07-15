@@ -6,7 +6,7 @@
 ## proportions on the log ratio of GMCs, one point per serotype:
 ##
 ##       log( p1[s] / p0[s] )  =  b1[s] * log( GMC1[s] / GMC0[s] )
-##
+#        log(GMC1[s]) =  log(GMC0)[s] + log( GMC1[s]/GMC0[s] ) #the gmc0 cancels out, leaving GMCI
 ##   p0[s], p1[s]   proportion of cases in the unimmunized / immunized arm
 ##   GMC0[s],GMC1[s] geometric-mean concentration in the unimmunized / immunized arm
 ##
@@ -32,27 +32,31 @@ model {
 
     ## ---- Error-in-variables model for the two GMCs -----------------------
     # latent TRUE log-GMC in the unimmunized arm = log(GMC0).
-    g0[s] ~ dnorm(0, 1.0E-4)
-    lgmc_u[s] ~ dnorm(g0[s], prec_u[s])           # noisy measurement of log(GMC0)
 
     # latent TRUE log ratio of GMCs = log(GMC1 / GMC0). Regularized by a
     # weakly-informative population distribution (matches mu_x/tau_x in the
     # original). The immunized true log-GMC is then g0[s] + lrgmc[s], so the
     # unimmunized measurement error propagates into the ratio predictor.
-    lrgmc[s] ~ dnorm(mu_lr, tau_lr)
+ 
+    # Noisy measurements of log(GMC) in immunized and unimmunized groups
+    lgmc_u[s] ~ dnorm(g0[s], prec_u[s])           # noisy measurement of log(GMC0)
     lgmc_i[s] ~ dnorm(g0[s] + lrgmc[s], prec_i[s]) # noisy measurement of log(GMC1)
+
+    #hyperpriors for lrgmc and g0
+    lrgmc[s] ~ dnorm(mu_lr, tau_lr)
+    g0[s] ~ dnorm(0, 1.0E-4)
 
     ## ---- Hierarchical serotype-specific baseline & slope -----------------
     logp0[s] ~ dnorm(mu_p0, tau_p0)   # log proportion of cases, unimmunized arm
     b1[s]    ~ dnorm(mu_b1, tau_b1)   # serotype slope, shrunk toward global mu_b1
 
-    # THE COP REGRESSION, in ratio form (no intercept: p1 = p0 when GMCs equal):
     #   log(p1/p0) = b1 * log(GMC1/GMC0)
     logp1[s] <- logp0[s] + b1[s] * lrgmc[s]
 
     ## ---- Poisson likelihood for the two arms (offset = Total_Cases) -------
     log(lambda_u[s]) <- log(total_u[s]) + logp0[s]
     log(lambda_i[s]) <- log(total_i[s]) + logp1[s]
+
     cases_u[s] ~ dpois(lambda_u[s])
     cases_i[s] ~ dpois(lambda_i[s])
 
@@ -63,19 +67,18 @@ model {
   ## ---- Hyperpriors --------------------------------------------------------
   # Baseline (unimmunized) log proportions.
   mu_p0 ~ dnorm(0, 1.0E-4)
-  sigma_p0 ~ dnorm(0, 1) T(0,)     # half-normal(0,1)
-  tau_p0 <- pow(sigma_p0, -2)
+
+  tau_p0 ~ dgamma(0.01,0.01)
 
   # Slopes: mu_b1 is the POOLED correlate of protection (log rate-ratio per
   # unit of log-GMC ratio).
   mu_b1 ~ dnorm(0, 1.0E-4)
-  sigma_b1 ~ dnorm(0, 1) T(0,)     # half-normal(0,1)
-  tau_b1 <- pow(sigma_b1, -2)
+
+  tau_b1 ~ dgamma(0.01,0.01)
 
   # Population distribution of the true log-GMC ratio.
   mu_lr ~ dnorm(0, 1.0E-4)
-  sigma_lr ~ dnorm(0, 1) T(0,)
-  tau_lr <- pow(sigma_lr, -2)
+  tau_lr ~ dgamma(0.01,0.01)
 
   ## Global summary
   rr_global <- exp(mu_b1)          # pooled rate ratio per unit log-GMC ratio
