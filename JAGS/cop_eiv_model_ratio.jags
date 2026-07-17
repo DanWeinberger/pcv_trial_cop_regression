@@ -69,16 +69,19 @@ model {
   mu_p0 ~ dnorm(0, 1.0E-4)
 
   tau_p0 ~ dgamma(0.01,0.01)
+  sigma_p0 <- 1 / sqrt(tau_p0)
 
   # Slopes: mu_b1 is the POOLED correlate of protection (log rate-ratio per
   # unit of log-GMC ratio).
   mu_b1 ~ dnorm(0, 1.0E-4)
 
   tau_b1 ~ dgamma(0.01,0.01)
+  sigma_b1 <- 1 / sqrt(tau_b1)
 
   # Population distribution of the true log-GMC ratio.
   mu_lr ~ dnorm(0, 1.0E-4)
   tau_lr ~ dgamma(0.01,0.01)
+  sigma_lr <- 1 / sqrt(tau_lr)
 
   ## Global summary
   rr_global <- exp(mu_b1)          # pooled rate ratio per unit log-GMC ratio

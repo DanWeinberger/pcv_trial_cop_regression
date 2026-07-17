@@ -1,0 +1,75 @@
+## Bayesian error-in-variables regression for a pneumococcal correlate of
+## protection (COP) -- LOG-ODDS-RATIO OUTCOME PARAMETERIZATION.
+##
+## This is a sibling of cop_eiv_model_ratio.jags. There, the outcome (log rate-
+## ratio of case proportions) was DERIVED in-model from two-arm Poisson case
+## counts. Here, the outcome is instead a log-OR that has already been computed
+## elsewhere (e.g. from a published table) and is supplied directly, together
+## with a measurement precision derived from its 95% CI. The outcome is
+## therefore treated as an error-in-variables quantity exactly like the log-GMC
+## predictor, and the two-arm Poisson likelihood / serotype baseline are gone
+## entirely -- an odds ratio already nets out the baseline risk, so the
+## regression passes THROUGH THE ORIGIN:
+##
+##       logor[s]  ~ true value  b1[s] * log( GMC1[s] / GMC0[s] )
+##
+##   GMC0[s], GMC1[s]  geometric-mean concentration in the unimmunized / immunized arm
+##
+## Data list:
+##   lgmc_u[s], lgmc_i[s]   OBSERVED log-GMC in each arm
+##   prec_u[s], prec_i[s]   measurement precision of the observed log-GMC
+##                          (= 1 / SE^2, SE derived from the 95% CI)
+##   logor[s]               OBSERVED log odds ratio for this serotype
+##   prec_or[s]             measurement precision of the observed log-OR
+##                          (= 1 / SE^2, SE derived directly from a symmetric
+##                          95% CI already on the log-OR scale:
+##                          SE = (upper - lower) / (2 * 1.96))
+##
+## Name mapping to the ratio model (see R/cop_model.R PARAMETERIZATIONS):
+##   lrgmc[s] <-> x[s]      mu_lr <-> mu_x      sigma_lr <-> sigma_x
+##   g0[s]    <-> ref[s]    or[s] <-> rr[s]     or_global <-> rr_global
+##   b1[s]/mu_b1/sigma_b1 are unchanged.  There is no baseline (a/mu_a/sigma_a):
+##   an OR has no serotype-specific intercept to estimate.
+
+model {
+  for (s in 1:S) {
+
+    ## ---- Error-in-variables model for the two GMCs (predictor) -----------
+    # latent TRUE log-GMC in the unimmunized arm = log(GMC0).
+    lgmc_u[s] ~ dnorm(g0[s], prec_u[s])            # noisy measurement of log(GMC0)
+    lgmc_i[s] ~ dnorm(g0[s] + lrgmc[s], prec_i[s])  # noisy measurement of log(GMC1)
+
+    # latent TRUE log ratio of GMCs = log(GMC1 / GMC0), regularized by a
+    # weakly-informative population distribution.
+    lrgmc[s] ~ dnorm(mu_lr, tau_lr)
+    g0[s] ~ dnorm(0, 1.0E-4)
+
+    ## ---- Serotype-specific slope, shrunk toward global mu_b1 --------------
+    b1[s] ~ dnorm(mu_b1, tau_b1)
+
+    ## ---- Error-in-variables model for the outcome (observed log-OR) -------
+    # the reported log-OR is a noisy measurement of the true COP effect
+    # b1[s] * lrgmc[s]; no serotype intercept, so this is a regression through
+    # the origin (mirrors log(p1/p0) = b1 * lrgmc in the ratio model, but here
+    # the "log(p1/p0)" is supplied directly instead of derived from counts).
+    logor[s] ~ dnorm(b1[s] * lrgmc[s], prec_or[s])
+
+    ## ---- Derived quantities ------------------------------------------------
+    or[s] <- exp(b1[s])            # odds ratio per unit increase in log(GMC1/GMC0)
+  }
+
+  ## ---- Hyperpriors --------------------------------------------------------
+  # Slopes: mu_b1 is the POOLED correlate of protection (log odds-ratio per
+  # unit of log-GMC ratio).
+  mu_b1 ~ dnorm(0, 1.0E-4)
+  tau_b1 ~ dgamma(0.01, 0.01)
+  sigma_b1 <- 1 / sqrt(tau_b1)
+
+  # Population distribution of the true log-GMC ratio.
+  mu_lr ~ dnorm(0, 1.0E-4)
+  tau_lr ~ dgamma(0.01, 0.01)
+  sigma_lr <- 1 / sqrt(tau_lr)
+
+  ## Global summary
+  or_global <- exp(mu_b1)          # pooled odds ratio per unit log-GMC ratio
+}
