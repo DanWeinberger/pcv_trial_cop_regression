@@ -8,9 +8,11 @@
 #   Rscript R/run_analysis.R param=ratio     # use the ratio parameterization
 #   Rscript R/run_analysis.R wisspar_de predictor_error=sd   # population-SD EIV
 #
-# The optional param=<centered|ratio> token selects the JAGS parameterization
-# (default centered). Both are algebraically equivalent and produce canonically-
-# named posteriors, so downstream plots/comparisons are identical either way.
+# The optional param=<centered|ratio|logor|RE> token selects the JAGS
+# parameterization (default centered). "centered"/"ratio" are algebraically
+# equivalent and share results/<id>/ unsuffixed; "RE" is a genuinely different
+# model (see R/cop_model.R PARAMETERIZATIONS) and writes to results/<id>_RE/
+# instead, so it never overwrites a centered/ratio fit for the same analysis.
 #
 # The optional predictor_error=<se|sd> token selects the EIV predictor error
 # (see prepare_cop_data() in R/cop_model.R): "se" (default) is the SE of the
@@ -55,7 +57,7 @@ ids <- if (length(ids_args) == 0 || identical(ids_args, "all")) {
 
 invisible(lapply(ids, function(id) {
   cfg     <- get_analysis(id)
-  out_dir <- analysis_out_dir(id)
+  out_dir <- analysis_out_dir(id, parameterization)
   if (predictor_error == "sd") out_dir <- paste0(out_dir, "_sd")
 
   cat("\n=====================================================================\n")

@@ -1,0 +1,138 @@
+## Bayesian error-in-variables Poisson regression for a pneumococcal
+## correlate of protection (COP) -- MULTI-STUDY GENERALIZATION of the
+## absolute-scale random-effects model (cop_eiv_model_RE.jags).
+##
+## cop_eiv_model_RE.jags assumes ONE outcome dataset and ONE immunogenicity
+## source, aligned one-to-one by serotype. This model relaxes both:
+##
+##   * OUTCOME: many outcome STUDIES (k = 1..K), each contributing IPD case
+##     counts for whichever serotypes IT covers (ragged -- e.g. a PCV7 study
+##     and a PCV13-additional-serotype study cover disjoint serotype sets).
+##     Every study shares the SAME per-serotype baseline a[s] and slope b1[s]
+##     (the scientific question -- is there one consistent correlate of
+##     protection across data sources), but studies differ in overall case
+##     ascertainment / surveillance intensity, captured by a per-study FIXED
+##     effect delta[k] added to the log-rate. "Fixed" (not hierarchical):
+##     each delta[k] gets its own vague prior, not a shared hyperdistribution
+##     -- there is no population of studies being generalized over here, just
+##     a handful of known, specific data sources. Identified by reference-
+##     study coding: delta[1] <- 0, so a[s]/mu_a are the baseline for outcome
+##     study 1 and delta[k], k>1, are shifts relative to it. (This requires
+##     the design to be "connected" -- every study must share at least one
+##     serotype with some other study, directly or transitively, or that
+##     study's delta[k] is confounded with the a[s] of its unique serotypes.)
+##
+##   * IMMUNOGENICITY: many immunogenicity STUDIES/sources (no count index
+##     needed in the model -- see N_imm_u/N_imm_i below), each contributing
+##     noisy GMC measurements for whichever serotypes IT covers. Critically,
+##     these are POOLED onto a SINGLE shared latent true log-GMC per serotype
+##     and arm (x_u[s], x_i[s]) -- i.e. the assumption is that the population
+##     distribution of individual log-titers for a given serotype and vaccine
+##     is the SAME across studies, and each study's reported (GMC, 95% CI) is
+##     just one more noisy estimate of that one shared population mean, at
+##     whatever precision its own sample size gives it. This is NOT a
+##     hierarchy-of-studies (no per-study latent, no study-level variance
+##     component) -- multiple rows from different studies for the same
+##     serotype/arm simply behave like repeated measurements of one quantity,
+##     directly analogous to fixed-effects meta-analysis pooling of a single
+##     population mean.
+##
+## Both hierarchies (a[s]/b1[s] pooling, x_u[s]/x_i[s] pooling) are otherwise
+## identical in spirit to cop_eiv_model_RE.jags -- see that file for why b1[s]
+## here remains a log rate-ratio per unit ABSOLUTE log-GMC, comparable across
+## parameterizations, and why the model also supports absolute risk-vs-GMC
+## prediction.
+##
+## Data are organised in RAGGED LONG FORMAT (one row per observation), each
+## row carrying an explicit serotype index (and, for outcome rows, a study
+## index) into the shared 1..S serotype-level parameter vectors:
+##
+##   S                    number of distinct serotypes (union across every
+##                        outcome and immunogenicity source)
+##   K                    number of outcome studies
+##
+##   N_out                number of outcome rows (one per study x serotype
+##                        actually reported by that study)
+##   study_out[m]          outcome-study index (1..K) for row m
+##   sero_out[m]           serotype index (1..S) for row m
+##   cases_u[m], total_u[m]   unimmunized-arm IPD case count / offset
+##   cases_i[m], total_i[m]   immunized-arm IPD case count / offset
+##
+##   N_imm_u, N_imm_i      number of unimmunized- / immunized-arm
+##                        immunogenicity rows (pooled across ALL immuno
+##                        sources; need not be equal, though in practice
+##                        each source usually reports both arms)
+##   sero_imm_u[n]         serotype index (1..S) for unimmunized-arm row n
+##   lgmc_u[n], prec_imm_u[n]  observed log-GMC and its measurement
+##                        precision (= 1 / SE^2) for that row
+##   sero_imm_i[n]         serotype index (1..S) for immunized-arm row n
+##   lgmc_i[n], prec_imm_i[n]  observed log-GMC and its measurement
+##                        precision for that row
+
+model {
+  ## ---- Serotype-level hierarchy (shared across ALL studies) ---------------
+  for (s in 1:S) {
+    # Latent TRUE absolute log-GMC, by arm -- pooled across serotypes AND
+    # across every immunogenicity source that reports this serotype/arm.
+    x_u[s] ~ dnorm(mu_x_u, tau_x_u)
+    x_i[s] ~ dnorm(mu_x_i, tau_x_i)
+
+    # Serotype-specific intercept (baseline for outcome study 1, see delta[])
+    # and slope, each shrunk toward its global hypermean.
+    a[s]  ~ dnorm(mu_a,  tau_a)
+    b1[s] ~ dnorm(mu_b1, tau_b1)
+
+    rr[s] <- exp(b1[s])     # rate ratio per unit absolute log-GMC
+  }
+
+  ## ---- Immunogenicity measurement model: pool multiple studies onto the ---
+  ## ---- SAME shared latent x_u[s] / x_i[s] (see file header) ---------------
+  for (n in 1:N_imm_u) {
+    lgmc_u[n] ~ dnorm(x_u[sero_imm_u[n]], prec_imm_u[n])
+  }
+  for (n in 1:N_imm_i) {
+    lgmc_i[n] ~ dnorm(x_i[sero_imm_i[n]], prec_imm_i[n])
+  }
+
+  ## ---- Outcome likelihood: many studies, ragged over serotypes, sharing --
+  ## ---- a[s]/b1[s]/x but with a per-study fixed-effect shift on baseline --
+  for (m in 1:N_out) {
+    log(lambda_u[m]) <- log(total_u[m]) + a[sero_out[m]] + delta[study_out[m]] +
+                         b1[sero_out[m]] * x_u[sero_out[m]]
+    cases_u[m] ~ dpois(lambda_u[m])
+
+    log(lambda_i[m]) <- log(total_i[m]) + a[sero_out[m]] + delta[study_out[m]] +
+                         b1[sero_out[m]] * x_i[sero_out[m]]
+    cases_i[m] ~ dpois(lambda_i[m])
+  }
+
+  ## ---- Outcome-study fixed effect (reference-study coding) ----------------
+  delta[1] <- 0
+  for (k in 2:K) {
+    delta[k] ~ dnorm(0, 1.0E-4)
+  }
+
+  ## ---- Hyperpriors ---------------------------------------------------------
+  # Intercepts (baseline for outcome study 1)
+  mu_a ~ dnorm(0, 1.0E-4)
+  tau_a ~ dgamma(0.01, 0.01)
+  sigma_a <- 1 / sqrt(tau_a)
+
+  # Slopes: mu_b1 is the POOLED correlate of protection (log rate-ratio per
+  # unit absolute log-GMC), common to every outcome study.
+  mu_b1 ~ dnorm(0, 1.0E-4)
+  tau_b1 ~ dgamma(0.01, 0.01)
+  sigma_b1 <- 1 / sqrt(tau_b1)
+
+  # Population distribution of the true absolute log-GMC, by arm, pooled
+  # across every immunogenicity source.
+  mu_x_u ~ dnorm(0, 1.0E-4)
+  mu_x_i ~ dnorm(0, 1.0E-4)
+  tau_x_u ~ dgamma(0.01, 0.01)
+  tau_x_i ~ dgamma(0.01, 0.01)
+  sigma_x_u <- 1 / sqrt(tau_x_u)
+  sigma_x_i <- 1 / sqrt(tau_x_i)
+
+  ## Global summaries
+  rr_global <- exp(mu_b1)          # pooled rate ratio per unit absolute log-GMC
+}

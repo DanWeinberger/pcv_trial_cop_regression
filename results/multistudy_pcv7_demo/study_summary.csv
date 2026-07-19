@@ -1,0 +1,4 @@
+"study_id","label","is_reference","delta_mean","delta_median","delta_lo","delta_hi","rate_ratio_vs_reference"
+"whitney","Whitney IPD case counts (NCKP surveillance)",TRUE,0,0,0,0,1
+"andrews","Andrews 2019 PCV7 IPD case counts (England & Wales, >=1 dose)",FALSE,1.03090389232709,1.03163119210976,0.851470401792215,1.20616104349649,2.80563863973536
+"vdl_pcv7","van der Linden 2016 PCV7 IPD (Germany, at least one dose)",FALSE,1.46158455679455,1.46319697092083,1.22706846584903,1.68774978592661,4.31974758400655

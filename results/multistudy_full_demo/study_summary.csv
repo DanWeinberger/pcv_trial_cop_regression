@@ -1,0 +1,6 @@
+"study_id","label","is_reference","delta_mean","delta_median","delta_lo","delta_hi","rate_ratio_vs_reference"
+"whitney","Whitney IPD case counts (NCKP surveillance)",TRUE,0,0,0,0,1
+"andrews","Andrews 2019 PCV7 IPD case counts (England & Wales, >=1 dose)",FALSE,1.03210517473094,1.03253869974661,0.8550220112131,1.20849935169195,2.80818593389679
+"vdl_pcv7","van der Linden 2016 PCV7 IPD (Germany, at least one dose)",FALSE,1.4662773111049,1.4672815344178,1.23006235388498,1.69289066596071,4.33742795101408
+"andrews_pcv13","Andrews 2019 PCV13 additional-serotype IPD (England & Wales, >=1 dose)",FALSE,2.13187849807395,2.14606995439323,0.824443421581513,3.3916387174834,8.55118572306207
+"vdl_pcv13","van der Linden 2016 PCV13 additional-serotype IPD (Germany, at least one dose)",FALSE,1.98971147770142,2.00338370082871,0.647371953713371,3.26561192134191,7.41410080217193

@@ -280,5 +280,13 @@ get_comparison <- function(id) {
   COMPARISONS[[id]]
 }
 
-analysis_out_dir   <- function(id) file.path("results", id)
+# "centered" and "ratio" are algebraically-equivalent reparameterizations (see
+# R/cop_model.R PARAMETERIZATIONS), so they intentionally share results/<id>/
+# unsuffixed. Any OTHER parameterization (e.g. "RE", a genuinely different
+# model) gets its own results/<id>_<parameterization>/ so it never clobbers
+# the centered/ratio fit for the same analysis.
+analysis_out_dir <- function(id, parameterization = "centered") {
+  base <- file.path("results", id)
+  if (parameterization %in% c("centered", "ratio")) base else paste0(base, "_", parameterization)
+}
 comparison_out_dir <- function(id) file.path("results", "comparisons", id)

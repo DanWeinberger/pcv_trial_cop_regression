@@ -1,0 +1,84 @@
+## Bayesian error-in-variables Poisson regression for a pneumococcal
+## correlate of protection (COP) -- ABSOLUTE-SCALE RANDOM-EFFECTS (RE)
+## PARAMETERIZATION.
+##
+## Unlike cop_eiv_model.jags/cop_eiv_model_ratio.jags, which regress the
+## within-serotype PAIRED contrast (log rate-ratio on log GMC-ratio, so the
+## unimmunized arm sits at predictor = 0 by construction), this model regresses
+## each arm's ABSOLUTE log-GMC directly against its ABSOLUTE log case-rate, with
+## a common per-serotype intercept a[s] and slope b1[s] applied to BOTH arms:
+##
+##   log(rate) = a[s] + b1[s] * (absolute log GMC)     for EACH of the two arms
+##
+## The unimmunized and immunized true log-GMCs (x_u[s], x_i[s]) are each latent
+## random effects drawn from their own population distribution (mu_x_u/tau_x_u,
+## mu_x_i/tau_x_i) -- i.e. partial pooling of the ABSOLUTE GMC level across
+## serotypes, not just of the within-serotype ratio. Because the model is linear
+## in x, the implied rate-ratio log(lambda_i/lambda_u) = b1[s]*(x_i[s]-x_u[s])
+## has the SAME interpretation as b1[s] in the centered/ratio models (log RR per
+## unit centered log-GMC), so slopes remain directly comparable across
+## parameterizations -- but b1[s]/a[s] here ALSO support predicting absolute risk
+## from absolute GMC, which the centered/ratio models cannot do.
+##
+## Data are organised BY SEROTYPE (s = 1..S). Each serotype contributes two
+## Poisson observations: the unimmunized arm and the immunized arm.
+##
+##   cases_u[s], cases_i[s]  observed serotype-specific IPD case counts
+##   total_u[s], total_i[s]  offsets (Total_Cases), used as log-exposure
+##   lgmc_u[s], lgmc_i[s]    OBSERVED log-GMC (log geometric mean concentration)
+##   prec_u[s], prec_i[s]    measurement precision of the observed log-GMC
+##                           (= 1 / SE^2, SE derived from the 95% CI)
+
+model {
+  for (s in 1:S) {
+
+    ## ---- Error-in-variables measurement model ----------------------------
+    # x_u[s], x_i[s] = latent TRUE absolute log-GMC for the unimmunized /
+    # immunized arms (each a random effect, partially pooled across serotypes).
+    lgmc_u[s] ~ dnorm(x_u[s], prec_u[s])          # noisy measurement of x_u[s]
+    lgmc_i[s] ~ dnorm(x_i[s], prec_i[s])          # noisy measurement of x_i[s]
+
+    x_u[s] ~ dnorm(mu_x_u, tau_x_u)
+    x_i[s] ~ dnorm(mu_x_i, tau_x_i)
+
+    ## ---- Hierarchical serotype-specific intercept & slope ----------------
+    a[s]  ~ dnorm(mu_a,  tau_a)     # serotype-specific intercept
+    b1[s] ~ dnorm(mu_b1, tau_b1)    # serotype-specific slope, shrunk toward global mu_b1
+
+    ## ---- Poisson likelihood (offset = Total_Cases) -----------------------
+    # Unimmunized arm
+    log(lambda_u[s]) <- log(total_u[s]) + a[s] + b1[s]*x_u[s] 
+    cases_u[s] ~ dpois(lambda_u[s])
+
+    # Immunized arm: centered predictor x[s].
+    log(lambda_i[s]) <- log(total_i[s]) + a[s] + b1[s]*x_i[s] 
+    cases_i[s] ~ dpois(lambda_i[s])
+
+    ## ---- Derived quantities ---------------------------------------------
+    rr[s] <- exp(b1[s])            # rate ratio per unit increase in centered log-GMC
+  }
+
+  ## ---- Hyperpriors --------------------------------------------------------
+  # Intercepts
+  mu_a ~ dnorm(0, 1.0E-4)
+  tau_a ~dgamma(0.01,0.01)
+  sigma_a <- 1 / sqrt(tau_a)
+
+  # Slopes: mu_b1 is the POOLED correlate of protection (log rate-ratio per
+  # unit of centered log-GMC).
+  mu_b1 ~ dnorm(0, 1.0E-4)
+  tau_b1 ~dgamma(0.01,0.01)
+  sigma_b1 <- 1 / sqrt(tau_b1)
+
+  # Population distribution of the true absolute log-GMC, by arm.
+  mu_x_u ~ dnorm(0, 1.0E-4)
+  mu_x_i ~ dnorm(0, 1.0E-4)
+
+  tau_x_u ~dgamma(0.01,0.01)
+  tau_x_i ~dgamma(0.01,0.01)
+  sigma_x_u <- 1 / sqrt(tau_x_u)
+  sigma_x_i <- 1 / sqrt(tau_x_i)
+
+  ## Global summaries
+  rr_global <- exp(mu_b1)          # pooled rate ratio per unit centered log-GMC
+}
