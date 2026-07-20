@@ -770,6 +770,7 @@ plot_cop_absolute <- function(prep, samp, out_dir, title_suffix = "") {
   if (has_ggplot) {
     library(ggplot2)
     p <- ggplot() +
+      geom_vline(xintercept = 0.35, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
       geom_ribbon(data = fit_glob, aes(x = gmc, ymin = lo, ymax = hi),
                   fill = "grey60", alpha = 0.25) +
       geom_line(data = fit_glob, aes(x = gmc, y = med), colour = "black", linewidth = 1.2) +
@@ -799,6 +800,7 @@ plot_cop_absolute <- function(prep, samp, out_dir, title_suffix = "") {
     plot(NA, xlim = xlim, ylim = ylim, log = "xy",
          xlab = "Absolute GMC", ylab = "Absolute risk (case proportion)",
          main = main_title)
+    abline(v = 0.35, lty = 2, col = "grey40")
     polygon(c(fit_glob$gmc, rev(fit_glob$gmc)), c(fit_glob$lo, rev(fit_glob$hi)),
             col = adjustcolor("grey60", 0.25), border = NA)
     lines(fit_glob$gmc, fit_glob$med, col = "black", lwd = 2)
@@ -1304,6 +1306,7 @@ plot_cop_absolute_multistudy <- function(prep, samp, out_dir, title_suffix = "")
   if (has_ggplot) {
     library(ggplot2)
     p <- ggplot() +
+      geom_vline(xintercept = 0.35, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
       geom_ribbon(data = fit_glob, aes(x = gmc, ymin = lo, ymax = hi),
                   fill = "grey60", alpha = 0.25) +
       geom_line(data = fit_glob, aes(x = gmc, y = med), colour = "black", linewidth = 1.2) +
@@ -1342,6 +1345,7 @@ plot_cop_absolute_multistudy <- function(prep, samp, out_dir, title_suffix = "")
       plot(NA, xlim = xlim, ylim = ylim, log = "xy",
            xlab = "Pooled absolute GMC", ylab = "Absolute risk",
            main = lab)
+      abline(v = 0.35, lty = 2, col = "grey40")
       polygon(c(fg$gmc, rev(fg$gmc)), c(fg$lo, rev(fg$hi)),
               col = adjustcolor("grey60", 0.25), border = NA)
       lines(fg$gmc, fg$med, col = "black", lwd = 2)
