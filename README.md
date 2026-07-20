@@ -1,120 +1,113 @@
 # PCV correlate-of-protection regression
 
 Bayesian error-in-variables Poisson regression estimating a pneumococcal
-correlate of protection (COP): serotype-specific IPD case counts regressed on
-centered log-GMC immunogenicity (measured with error), with hierarchical
-serotype intercepts and slopes. The global slope `mu_b1` is the pooled COP.
+correlate of protection (COP) across multiple outcome studies and multiple
+immunogenicity (GMC) sources. Serotype-specific IPD case counts, from one or
+more outcome studies, are regressed on a single shared latent absolute
+log-GMC per serotype/arm, pooled across one or more immunogenicity sources
+and measured with error. The global slope `mu_b1` is the pooled COP, shared
+across every outcome study; baselines vary freely by study x serotype.
 
 ## Layout
 
 | Path | Role |
 |------|------|
-| `JAGS/cop_eiv_model.jags` | The Bayesian model (unchanged across analyses). |
-| `R/cop_model.R` | Reusable engine: `prepare_cop_data()`, `fit_cop()`, `plot_cop_scatter()`, `slope_summary()`. No analysis is hard-coded here. |
-| `R/config.R` | **The only file you edit to add a comparison.** Registry of `ANALYSES` (outcome + predictor) and `COMPARISONS` (sets of analyses whose slopes are contrasted). |
-| `R/run_analysis.R` | Driver: fit + plot + summarise one or more analyses. |
-| `R/compare_slopes.R` | Contrast the global slope `mu_b1` across analyses in a comparison. |
-| `results/<id>/` | Per-analysis outputs. |
-| `results/comparisons/<id>/` | Per-comparison outputs. |
+| `JAGS/cop_eiv_model_multistudy.jags` | The Bayesian model (the only one this project carries forward). |
+| `R/cop_model.R` | Reusable engine: `prepare_cop_data_multistudy()`, `fit_cop_multistudy()`, `compute_waic()`, `slope_summary()`, `study_summary()`, `plot_cop_absolute_multistudy()`. No model spec is hard-coded here. |
+| `R/config.R` | **The only file you edit to add a model spec or comparison.** Registry of `OUTCOME_SOURCES`, `IMMUNO_SOURCES`, `MODEL_SPECS` (which outcomes + which predictor sources to fit), and `MODEL_COMPARISONS` (sets of specs to rank by WAIC). |
+| `R/run_models.R` | Driver: fit + summarise one or more model specs. |
+| `R/compare_waic.R` | Rank model specs by WAIC and compare their global slope `mu_b1`. |
+| `results/<id>/` | Per-spec outputs (git-ignored; regenerated on demand). |
+| `results/comparisons/<id>/` | Per-comparison outputs (git-ignored). |
 
 ## Running
 
 ```sh
-Rscript R/run_analysis.R              # fit every analysis in the registry
-Rscript R/run_analysis.R nckp navajo  # fit selected analyses by id
-Rscript R/compare_slopes.R            # run every comparison
-Rscript R/compare_slopes.R predictor_source   # one comparison by id
+Rscript R/run_models.R           # fit every model spec in the registry (currently just "pooled")
+Rscript R/run_models.R pooled    # fit a spec by id
+Rscript R/compare_waic.R         # run every WAIC comparison (none defined yet -- see below)
 ```
 
 Each `results/<id>/` gets: `posterior_summary.csv`, `mcmc.rds`,
-`diagnostics.pdf`, `cop_scatter_gmr_rr.png`, `slope_summary.csv`.
-Each `results/comparisons/<id>/` gets, at the **global** slope level:
-`slopes_by_analysis.csv`, `slope_pairwise_diffs.csv`, `slope_forest.pdf`/`.png`,
-`slope_overlay.pdf`/`.png`; and at the **per-serotype** slope level:
-`serotype_slopes_by_analysis.csv`, `serotype_slope_pairwise_diffs.csv`,
-`serotype_slope_forest.pdf`/`.png` (forest faceted by serotype).
+`diagnostics.pdf`, `waic.csv`, `slope_summary.csv`, `study_summary.csv`,
+`cop_scatter_absolute_risk_gmc_multistudy.png`.
 
-## Current analyses
+Each `results/comparisons/<id>/` gets a **WAIC leaderboard**
+(`waic_comparison.csv`, `waic_comparison.pdf`/`.png`) ranking the member
+specs, and the **global slope** `mu_b1` side by side (`slopes_by_spec.csv`,
+`slope_pairwise_diffs.csv`, `slope_forest.pdf`/`.png`,
+`slope_overlay.pdf`/`.png`) — WAIC tells you which predictor combination the
+outcome data prefers; the slope forest tells you whether that preference
+actually changes the COP estimate.
 
-Two outcomes, each regressed on the same three immunogenicity predictor
-sources (selected by the `Study` column: `NCKP`, `Am_Indian`, `South_Africa`).
+## Model specs and comparisons
 
-**Whitney IPD outcome** — `data/siber_whitney_merged.csv` (case counts identical
-across studies):
+A **model spec** (`MODEL_SPECS` in `R/config.R`) pools a fixed set of outcome
+studies with a chosen set of immunogenicity ("predictor") sources into one
+`cop_eiv_model_multistudy.jags` fit.
 
-- `nckp` — NCKP immunogenicity (US, Whitney/Kaiser)
-- `navajo` — Navajo / American Indian immunogenicity (`Study == "Am_Indian"`)
-- `south_africa` — South Africa immunogenicity
+The production default is a single spec, `pooled`, which pools **every**
+registered outcome study and **every** registered immunogenicity source into
+one fit: PCV7 serotypes (4, 6B, 9V, 14, 18C, 19F, 23F) and PCV13-additional
+serotypes (1, 3, 6A, 7F, 19A) together, spanning 12 serotypes total.
 
-**Andrews 2019 PCV7 outcome** — `data/siber_andrews_merged.csv`, built by
-`R/build_andrews_merged.R`. Reuses the SIBER immunogenicity predictors but swaps
-the outcome to the Andrews 2019 PCV7 trial (Table 2, `>=1 dose` schedule,
-England & Wales; Vaccinated→Immunized, Unvaccinated→Unimmunized) over the seven
-PCV7 serotypes (4, 6B, 9V, 14, 18C, 19F, 23F):
+- Outcomes: Whitney IPD (`data/siber_whitney_merged.csv`), Andrews 2019 PCV7
+  (`data/siber_andrews_merged.csv`, built by `R/build_andrews_merged.R`), van
+  der Linden 2016 PCV7 (`data/siber_vanderlinden_pcv7_merged.csv`, built by
+  `R/build_vanderlinden_pcv7_merged.R`), Andrews 2019 PCV13-additional
+  (`data/wisspar_andrews_merged.csv`, built by
+  `R/build_wisspar_andrews_merged.R`), van der Linden 2016 PCV13-additional
+  (`data/wisspar_vanderlinden_pcv13_merged.csv`, built by
+  `R/build_vanderlinden_pcv13_merged.R`).
+- Immunogenicity: NCKP, Navajo/American Indian, South Africa (PCV7
+  serotypes), plus the three WISSPAR head-to-head PCV13-vs-PCV7 trials —
+  Germany, Taiwan, South Korea (PCV13-additional serotypes).
 
-- `nckp_andrews`, `navajo_andrews`, `south_africa_andrews` — same three
-  predictors, Andrews outcome.
+There's no "reference study" or connectedness requirement in the multistudy
+design (see `JAGS/cop_eiv_model_multistudy.jags`), so the PCV7 and
+PCV13-additional blocks link through the shared `mu_a`/`tau_a` and
+`mu_b1`/`tau_b1` hyperpriors even though no single outcome study reports
+both sets of serotypes.
 
-**WISSPAR head-to-head PCV13-vs-PCV7 outcome** — `data/wisspar_andrews_merged.csv`,
-built by `R/build_wisspar_andrews_merged.R` from the WISSPAR immunogenicity
-database (see below). Children, post-primary, restricted to the PCV13-additional
-serotypes (1, 3, 6A, 7F, 19A), where the PCV7 arm carries no antigen and is a
-genuine no-antigen comparator: `PCV13 → Immunized`, `PCV7 → Unimmunized`. The
-outcome is the Andrews 2019 **PCV13** IPD data (Table 3, `>=1 dose`), broadcast
-identically across trials so slopes are directly comparable. One analysis per
-head-to-head trial (predictor = that trial's per-serotype GMC + 95% CI):
+`MODEL_COMPARISONS` is empty for now — there's only one spec, so nothing to
+rank. If you register an alternative predictor set later (e.g. drop a
+source, add a new one) as a second spec sharing `pooled`'s outcomes, add a
+`MODEL_COMPARISONS` entry and `R/compare_waic.R` will rank it against
+`pooled` by WAIC, with the global slope `mu_b1` shown side by side — WAIC
+tells you which predictor combination the outcome data prefers; the slope
+forest tells you whether that preference actually changes the COP estimate.
 
-- `wisspar_de` — NCT00366340 (Germany)
-- `wisspar_tw` — NCT00688870 (Taiwan)
-- `wisspar_kr` — NCT00689351 (South Korea)
+## WAIC methodology
 
-**van der Linden 2016 outcome (Germany)** — PCV7 `data/siber_vanderlinden_pcv7_merged.csv`
-(built by `R/build_vanderlinden_pcv7_merged.R`) and PCV13
-`data/wisspar_vanderlinden_pcv13_merged.csv` (built by
-`R/build_vanderlinden_pcv13_merged.R`). The IPD outcome is van der Linden et al.
-2016 (PLOS ONE, doi:10.1371/journal.pone.0161257), a German indirect-cohort /
-screening-method case-control study, Table 1 (PCV7) and Table 2 (PCV13), both
-"at least one dose", children under two. Tables were extracted to
-`data/vanderlinden_tables_tidy.csv` in the Andrews schema by
-`R/build_vanderlinden_tidy.R`, using the same arm-specific denominator as
-Andrews (`Total_Cases = serotype cases + controls`, per vaccination arm). PCV7
-reuses the three SIBER predictors over the 7 PCV7 serotypes; PCV13 reuses the
-three WISSPAR head-to-head GMC predictors over the additional serotypes
-(1, 3, 6A, 7F, 19A — serotype 5 had zero German cases and drops out):
+WAIC only compares models fit to the *same* data. Swapping which
+immunogenicity sources are pooled changes the number of immunogenicity rows
+fed into the model but never the outcome rows — so `compute_waic()` (in
+`R/cop_model.R`) computes WAIC from the **outcome (case-count) likelihood
+only**, monitored per outcome row as `log_lik[m]` in
+`cop_eiv_model_multistudy.jags`, never from the immunogenicity
+measurement-error likelihood. Each row (a study x serotype's paired
+unimmunized/immunized case counts) is one WAIC observation unit, since both
+arms share the same `b1[s]`/`x_u[s]`/`x_i[s]` and aren't meaningfully
+separable. WAIC itself is hand-rolled from those pointwise log-likelihoods
+(standard formulas: `lppd`, `p_waic` from the pointwise posterior variance,
+`elpd_waic = lppd - p_waic`, `waic = -2 * elpd_waic`) rather than pulled in
+via the `loo` package, since nothing else in this project needs it. Requires
+JAGS >= 4.3 (for `logdensity.pois()`).
 
-- `nckp_vdl_pcv7`, `navajo_vdl_pcv7`, `south_africa_vdl_pcv7` — PCV7 outcome.
-- `wisspar_de_vdl_pcv13`, `wisspar_tw_vdl_pcv13`, `wisspar_kr_vdl_pcv13` — PCV13.
+## Adding a model spec or comparison
 
-Comparisons:
-
-- `predictor_source` — three global slopes on the Whitney outcome.
-- `predictor_source_andrews` — three global slopes on the Andrews outcome.
-- `outcome_nckp`, `outcome_navajo`, `outcome_south_africa` — Whitney vs Andrews
-  PCV7 outcome, holding each predictor source fixed (global + per-serotype).
-- `wisspar_by_trial` — COP slope contrasted across the three WISSPAR
-  head-to-head trials (consistency check for the additional-serotype COP).
-- `predictor_source_vdl_pcv7` — three global slopes on the van der Linden PCV7
-  outcome; `vdl_pcv13_by_trial` — three WISSPAR trials on the van der Linden
-  PCV13 outcome.
-- `pcv7_outcome_{nckp,navajo,south_africa}` — PCV7 COP slope, Andrews (England &
-  Wales) vs van der Linden (Germany) outcome, holding each SIBER predictor fixed.
-- `pcv13_outcome_{de,tw,kr}` — PCV13 COP slope, Andrews vs van der Linden
-  outcome, holding each WISSPAR head-to-head GMC predictor fixed.
-
-Every comparison now reports both the pooled global slope `mu_b1` and the
-serotype-specific slopes `b1[s]`, so "compare the Andrews slopes with the
-Whitney slopes" is answered both overall and serotype by serotype.
-
-## Adding a comparison
-
-1. Add a `list(...)` to `ANALYSES` in `R/config.R` (give it an `id`, a
-   `data_file`, the `predictor_study` value, and human-readable labels).
-2. Add or extend a `COMPARISONS` entry listing the analysis ids to contrast.
-3. `Rscript R/run_analysis.R <new ids>` then `Rscript R/compare_slopes.R <comparison id>`.
-
-When a future dataset carries a genuinely different **outcome**, build the
-merged CSV for it and point a new analysis's `data_file` at it — no engine code
-changes needed.
+1. If the outcome/immunogenicity dataset isn't already registered, add it to
+   `OUTCOME_SOURCES` / `IMMUNO_SOURCES` in `R/config.R` (a `data_file` +
+   `label`; immuno sources also need the `study` value selecting the right
+   `Study`-column subset). If it's a new outcome, also add its id to
+   `pooled`'s `outcomes` so it's covered by the production model.
+2. To test an alternative predictor set against `pooled`: add a
+   `list(id=, outcomes=, immuno=)` to `MODEL_SPECS` (normally with the SAME
+   `outcomes` as `pooled`, so WAIC is comparing like with like), then a
+   `MODEL_COMPARISONS` entry listing both spec ids (include `pooled` as the
+   baseline).
+3. `Rscript R/run_models.R <new spec id>` then
+   `Rscript R/compare_waic.R <comparison id>`.
 
 ## WISSPAR immunogenicity import
 
@@ -133,8 +126,7 @@ database (Worldwide Index of Serotype Specific Pneumococcal Antibody Responses):
 ```sh
 Rscript R/build_wisspar_head2head.R        # 1. import the slice (GMC + OPA)
 Rscript R/build_wisspar_andrews_merged.R   # 2. build the COP merged CSV
-Rscript R/run_analysis.R wisspar_de wisspar_tw wisspar_kr
-Rscript R/compare_slopes.R wisspar_by_trial
+Rscript R/run_models.R pooled              # 3. refit the pooled model with it
 ```
 
 Scope notes for the first pass:

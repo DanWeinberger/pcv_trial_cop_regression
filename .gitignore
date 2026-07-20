@@ -7,3 +7,6 @@ data/wisspar_export.json
 .RData
 .Rproj.user/
 data/run_out.log
+
+# Model outputs -- fully regenerable via R/run_models.R and R/compare_waic.R
+results/
