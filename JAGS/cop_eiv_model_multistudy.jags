@@ -70,6 +70,17 @@
 ##   sero_imm_i[n]         serotype index (1..S) for immunized-arm row n
 ##   lgmc_i[n], prec_imm_i[n]  observed log-GMC and its measurement
 ##                        precision for that row
+##
+## WAIC: log_lik[m] below is a per-outcome-row log-likelihood, monitored so R
+## can compute WAIC across candidate models AFTER sampling. WAIC must compare
+## models fit to the same data; swapping which immunogenicity sources are
+## pooled changes N_imm_u/N_imm_i but never N_out, so only the OUTCOME
+## likelihood is comparable across predictor-source combinations -- the
+## immunogenicity measurement-error likelihood is deliberately excluded here.
+## Each row m (a study x serotype's paired unimmunized/immunized case counts)
+## is one WAIC observation unit: both arms share the same b1[s]/x_u[s]/x_i[s],
+## so they aren't meaningfully separable into independent units. Requires
+## JAGS >= 4.3 for logdensity.pois().
 
 model {
   ## ---- Serotype-level hierarchy (shared across ALL studies) ---------------
@@ -117,6 +128,10 @@ model {
     log(lambda_i[m]) <- log(total_i[m]) + a[study_out[m], sero_out[m]] +
                          b1[sero_out[m]] * x_i[sero_out[m]]
     cases_i[m] ~ dpois(lambda_i[m])
+
+    # Per-row outcome log-likelihood, for WAIC (see file header).
+    log_lik[m] <- logdensity.pois(cases_u[m], lambda_u[m]) +
+                  logdensity.pois(cases_i[m], lambda_i[m])
   }
 
   ## ---- Hyperpriors ---------------------------------------------------------
