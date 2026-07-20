@@ -4,13 +4,13 @@
 # Demonstrates the generalization in R/cop_model.R over the existing PCV7
 # data already used by the single-study analyses in R/config.R:
 #
-#   OUTCOME (ragged, study-specific fixed effect delta[k]):
-#     whitney  -- Whitney IPD (NCKP surveillance, US)          [reference]
+#   OUTCOME (ragged, study x serotype intercept a[k,s]):
+#     whitney  -- Whitney IPD (NCKP surveillance, US)
 #     andrews  -- Andrews 2019 PCV7 IPD (England & Wales)
 #     vdl_pcv7 -- van der Linden 2016 PCV7 IPD (Germany)
 #   All three report the same 7 PCV7 serotypes (4, 6B, 9V, 14, 18C, 19F,
-#   23F), so this genuinely exercises the ragged/study-fixed-effect design
-#   even though, here, the serotype sets happen to coincide.
+#   23F), so this genuinely exercises the ragged design even though, here,
+#   the serotype sets happen to coincide.
 #
 #   IMMUNOGENICITY (pooled onto ONE shared latent per serotype/arm):
 #     NCKP, Am_Indian (Navajo), South_Africa -- three DIFFERENT populations/

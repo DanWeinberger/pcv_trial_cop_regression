@@ -827,8 +827,9 @@ plot_cop_absolute <- function(prep, samp, out_dir, title_suffix = "") {
 # MULTI-STUDY GENERALIZATION (cop_eiv_model_multistudy.jags)
 #
 # Generalizes the single-outcome/single-predictor design above to MANY
-# outcome studies (ragged over serotypes, sharing a[s]/b1[s] but with a
-# per-study fixed-effect baseline shift) and MANY immunogenicity sources
+# outcome studies (ragged over serotypes, sharing b1[s] but with a baseline
+# a[k,s] that varies FREELY by both study and serotype, shrunk toward one
+# shared hypermean/hypervariance mu_a/tau_a) and MANY immunogenicity sources
 # (pooled onto a single shared latent true log-GMC per serotype/arm, under
 # the assumption that the population distribution of log-titers for a given
 # serotype and vaccine is the same across studies). See the JAGS file header
@@ -843,15 +844,18 @@ plot_cop_absolute <- function(prep, samp, out_dir, title_suffix = "") {
 #                                     sources and a list of immunogenicity
 #                                     sources
 #   fit_cop_multistudy()           : compile + sample + save outputs
-#   study_summary()                : tidy per-outcome-study fixed-effect
-#                                     (delta[k]) table
+#   study_summary()                : tidy per-outcome-study baseline (mean of
+#                                     a[k,s] across that study's own
+#                                     serotypes, vs. the global hypermean
+#                                     mu_a) table
 #
 # slope_summary() above is generic over prep$S/prep$serotypes and canonical
 # mcmc column names, so it works UNMODIFIED against a multi-study fit's
-# global a[s]/b1[s]. plot_cop_scatter()/plot_cop_absolute() do NOT apply here
-# unmodified -- they assume a single u/i pair per serotype, which no longer
-# exists once outcomes are ragged across studies; use prep$outcome_sources /
-# prep$immuno_sources for any per-source plotting instead.
+# global a[k,s]/b1[s]. plot_cop_scatter()/plot_cop_absolute() do NOT apply
+# here unmodified -- they assume a single u/i pair per serotype, which no
+# longer exists once outcomes are ragged across studies; use
+# prep$outcome_sources / prep$immuno_sources for any per-source plotting
+# instead.
 # =====================================================================
 
 # ---------------------------------------------------------------------
@@ -890,8 +894,9 @@ read_outcome_source <- function(data_file, study_id, label = study_id) {
 #
 #   outcome_sources : list of list(data_file=, study_id=, label= [optional]),
 #                     one entry per outcome dataset (merged CSV). study_id
-#                     must be unique; the FIRST entry is the reference study
-#                     (delta[1] <- 0 in the JAGS model).
+#                     must be unique. No entry is a "reference study" -- every
+#                     study gets its own a[k,s] baseline per serotype it
+#                     reports, shrunk toward the shared mu_a/tau_a hyperprior.
 #   immuno_sources  : list of list(data_file=, study=, label= [optional]),
 #                     one entry per (file, Study) immunogenicity source, as
 #                     already selected by prepare_gmc_predictor(). ALL
@@ -994,11 +999,14 @@ MULTISTUDY_MODEL_FILE <- file.path("JAGS", "cop_eiv_model_multistudy.jags")
 MULTISTUDY_PARAMS <- c("mu_b1", "b1", "rr", "rr_global",
                        "a", "mu_a", "sigma_a", "sigma_b1",
                        "mu_x_u", "sigma_x_u", "x_u",
-                       "mu_x_i", "sigma_x_i", "x_i", "delta")
+                       "mu_x_i", "sigma_x_i", "x_i")
 
-# Data-driven inits: per-serotype means computed from whichever outcome/
-# immuno rows actually reference that serotype (serotypes with no rows on one
-# side fall back to the overall mean -- the hierarchical prior does the rest).
+# Data-driven inits: per-(study, serotype) baseline computed from whichever
+# outcome row actually reports that combination (combinations with no row --
+# i.e. that study didn't report that serotype -- fall back to the overall
+# mean; the hierarchical prior on a[k,s] does the rest). Immunogenicity
+# latents still init from per-serotype means across whichever immuno rows
+# reference that serotype.
 make_inits_multistudy <- function(prep) {
   jd <- prep$jags_data
   S <- prep$S; K <- prep$K
@@ -1012,20 +1020,19 @@ make_inits_multistudy <- function(prep) {
     out
   }
 
-  a_start   <- mean_by_sero(jd$sero_out, log(jd$cases_u / jd$total_u))
+  a_start <- matrix(NA_real_, K, S)
+  a_start[cbind(jd$study_out, jd$sero_out)] <- log(jd$cases_u / jd$total_u)
+  a_start[is.na(a_start)] <- mean(a_start, na.rm = TRUE)
+
   x_u_start <- mean_by_sero(jd$sero_imm_u, jd$lgmc_u)
   x_i_start <- mean_by_sero(jd$sero_imm_i, jd$lgmc_i)
 
-  inits <- list(
+  list(
     a = a_start, b1 = rep(-0.5, S),
     x_u = x_u_start, x_i = x_i_start,
     mu_a = mean(a_start), mu_b1 = -0.5,
     mu_x_u = mean(x_u_start), mu_x_i = mean(x_i_start)
   )
-  # delta[1] is a deterministic node (delta[1] <- 0 in the JAGS model); NA
-  # marks it as "no initial value supplied" so JAGS leaves it to compute.
-  if (K > 1) inits$delta <- c(NA, rep(0, K - 1))
-  inits
 }
 
 fit_cop_multistudy <- function(prep, out_dir,
@@ -1039,7 +1046,7 @@ fit_cop_multistudy <- function(prep, out_dir,
   if (!quiet) {
     cat("Multi-study model (", MULTISTUDY_MODEL_FILE, ")\n", sep = "")
     cat("Serotypes (", prep$S, "):", paste(prep$serotypes, collapse = ", "), "\n")
-    cat("Outcome studies (", prep$K, ", study 1 = reference, delta[1] = 0):\n", sep = "")
+    cat("Outcome studies (", prep$K, ", each with its own a[k,s] baseline):\n", sep = "")
     print(setNames(prep$study_labels, seq_along(prep$study_labels)))
     cat("Immunogenicity sources pooled onto shared x_u/x_i:", length(prep$immuno_sources), "\n")
   }
@@ -1065,11 +1072,7 @@ fit_cop_multistudy <- function(prep, out_dir,
   mu_b1_draws <- M[, "mu_b1"]
   rr_draws    <- M[, "rr_global"]
 
-  # delta[1] is a deterministic constant (reference-study coding, always 0),
-  # so it has zero variance -- exclude it from convergence diagnostics, which
-  # are only meaningful for actual stochastic nodes.
   es <- effectiveSize(samp)
-  es <- es[setdiff(names(es), "delta[1]")]
 
   gd  <- gelman.diag(samp, multivariate = FALSE)
   max_psrf <- max(gd$psrf[, "Point est."], na.rm = TRUE)
@@ -1091,7 +1094,6 @@ fit_cop_multistudy <- function(prep, out_dir,
   saveRDS(samp, file.path(out_dir, "mcmc.rds"))
 
   diag_params <- c("mu_b1", "sigma_b1", "mu_a", "sigma_a")
-  if (prep$K > 1) diag_params <- c(diag_params, sprintf("delta[%d]", 2:prep$K))
   pdf(file.path(out_dir, "diagnostics.pdf"), width = 9, height = 6)
   plot(samp[, diag_params])
   dev.off()
@@ -1103,27 +1105,40 @@ fit_cop_multistudy <- function(prep, out_dir,
 }
 
 # ---------------------------------------------------------------------
-# study_summary(): tidy per-outcome-study fixed-effect (delta[k]) table --
-# how much higher/lower each study's baseline log-rate is relative to the
-# reference study (delta[1] = 0 by construction). Written to
-# out_dir/study_summary.csv (if out_dir given) and returned as a data frame.
+# study_summary(): tidy per-outcome-study baseline table. There is no longer
+# a single per-study fixed effect (a[k,s] now varies by serotype within a
+# study too), so this summarises each study's OWN average baseline --
+# mean_s(a[k,s]) over just the serotypes that study reports -- and how that
+# compares to the global hypermean mu_a (the pooled baseline across every
+# study/serotype). rate_ratio_vs_global > 1 means this study's serotypes run
+# hotter (higher case ascertainment / incidence) than the pooled average;
+# < 1 means cooler. Written to out_dir/study_summary.csv (if out_dir given)
+# and returned as a data frame.
 # ---------------------------------------------------------------------
 study_summary <- function(samp, prep, out_dir = NULL) {
   M <- as.matrix(samp)
   qtiles <- c(0.025, 0.5, 0.975)
 
   rows <- lapply(seq_len(prep$K), function(k) {
-    draws <- if (k == 1) rep(0, nrow(M)) else M[, sprintf("delta[%d]", k)]
-    q <- quantile(draws, qtiles)
+    o <- prep$outcome_sources[[k]]
+    sero_idx <- match(o$serotypes, prep$serotypes)
+    a_cols <- sprintf("a[%d,%d]", k, sero_idx)
+    a_bar_draws <- if (length(a_cols) > 1) rowMeans(M[, a_cols, drop = FALSE]) else M[, a_cols]
+    rr_draws <- exp(a_bar_draws - M[, "mu_a"])
+
+    q    <- quantile(a_bar_draws, qtiles)
+    rr_q <- quantile(rr_draws, qtiles)
     data.frame(
-      study_id     = prep$outcome_sources[[k]]$study_id,
-      label        = prep$study_labels[k],
-      is_reference = k == 1,
-      delta_mean   = mean(draws),
-      delta_median = q[["50%"]],
-      delta_lo     = q[["2.5%"]],
-      delta_hi     = q[["97.5%"]],
-      rate_ratio_vs_reference = exp(q[["50%"]]),
+      study_id       = o$study_id,
+      label          = prep$study_labels[k],
+      n_serotypes    = o$S,
+      a_bar_mean     = mean(a_bar_draws),
+      a_bar_median   = q[["50%"]],
+      a_bar_lo       = q[["2.5%"]],
+      a_bar_hi       = q[["97.5%"]],
+      rate_ratio_vs_global_median = rr_q[["50%"]],
+      rate_ratio_vs_global_lo     = rr_q[["2.5%"]],
+      rate_ratio_vs_global_hi     = rr_q[["97.5%"]],
       stringsAsFactors = FALSE
     )
   })
@@ -1153,12 +1168,15 @@ study_summary <- function(samp, prep, out_dir = NULL) {
 #       (so a point's horizontal position never changes across facets).
 #
 # Overlay per facet: each serotype's own fitted line
-#   log(risk) = a[s] + delta[k] + b1[s] * log(GMC)
-# across its own pooled absolute-GMC range, and the population-average curve
-#   log(risk) = mu_a + delta[k] + mu_b1 * log(GMC)
+#   log(risk) = a[k,s] + b1[s] * log(GMC)
+# across its own pooled absolute-GMC range, and that study's own
+# population-average curve
+#   log(risk) = mean_s(a[k,s]) + mu_b1 * log(GMC)
 # with a 95% credible band -- i.e. the SAME global COP slope (mu_b1) in every
-# facet, shifted vertically by that study's own fixed effect delta[k]
-# (delta[1] = 0 for the reference study).
+# facet, but each facet's intercept is that study's OWN average baseline
+# (mean of a[k,s] over just the serotypes it reports -- see study_summary()),
+# since a[k,s] no longer decomposes into a single global a[s] plus a per-study
+# shift.
 #
 # Saves cop_scatter_absolute_risk_gmc_multistudy.png.
 # ---------------------------------------------------------------------
@@ -1171,7 +1189,13 @@ plot_cop_absolute_multistudy <- function(prep, samp, out_dir, title_suffix = "")
   z <- qnorm(0.975)
 
   M <- as.matrix(samp)
-  need <- c("mu_a", "mu_b1", sprintf("a[%d]", seq_len(S)), sprintf("b1[%d]", seq_len(S)),
+  a_pairs <- do.call(rbind, lapply(seq_len(K), function(k) {
+    o <- prep$outcome_sources[[k]]
+    if (o$S == 0) return(NULL)
+    data.frame(k = k, s = match(o$serotypes, serotypes))
+  }))
+  need <- c("mu_a", "mu_b1", sprintf("a[%d,%d]", a_pairs$k, a_pairs$s),
+           sprintf("b1[%d]", seq_len(S)),
            sprintf("x_u[%d]", seq_len(S)), sprintf("x_i[%d]", seq_len(S)))
   if (!all(need %in% colnames(M))) {
     stop("plot_cop_absolute_multistudy() requires a fit from fit_cop_multistudy() -- ",
@@ -1187,10 +1211,7 @@ plot_cop_absolute_multistudy <- function(prep, samp, out_dir, title_suffix = "")
   x_i_lo  <- vapply(seq_len(S), function(s) quantile(M[, sprintf("x_i[%d]", s)], 0.025), numeric(1))
   x_i_hi  <- vapply(seq_len(S), function(s) quantile(M[, sprintf("x_i[%d]", s)], 0.975), numeric(1))
 
-  a_hat     <- vapply(seq_len(S), function(s) mean(M[, sprintf("a[%d]", s)]),  numeric(1))
-  b1_hat    <- vapply(seq_len(S), function(s) mean(M[, sprintf("b1[%d]", s)]), numeric(1))
-  delta_hat <- vapply(seq_len(K), function(k)
-    if (k == 1) 0 else mean(M[, sprintf("delta[%d]", k)]), numeric(1))
+  b1_hat <- vapply(seq_len(S), function(s) mean(M[, sprintf("b1[%d]", s)]), numeric(1))
 
   # ---- Per-facet (outcome study) observed risk points, count sampling ----
   # ---- error (Haldane 0.5 correction for zero-count arms) ----------------
@@ -1221,29 +1242,37 @@ plot_cop_absolute_multistudy <- function(prep, samp, out_dir, title_suffix = "")
   })
   pts <- do.call(rbind, pts_list)
 
-  # ---- Per-serotype fitted line, per facet: a[s] + delta[k] + b1[s]*log(GMC)
+  # ---- Per-serotype fitted line, per facet: a[k,s] + b1[s]*log(GMC) -------
   sero_lines_list <- lapply(seq_len(K), function(k) {
     o <- prep$outcome_sources[[k]]
     if (o$S == 0) return(NULL)
     idx <- match(o$serotypes, serotypes)
     do.call(rbind, lapply(seq_along(idx), function(j) {
       s <- idx[j]
+      a_ks <- mean(M[, sprintf("a[%d,%d]", k, s)])
       xg <- seq(min(x_u_med[s], x_i_med[s]), max(x_u_med[s], x_i_med[s]), length.out = 50)
       data.frame(Study = prep$study_labels[k], study_idx = k,
                 Serotype = o$serotypes[j], gmc = exp(xg),
-                risk = exp(a_hat[s] + delta_hat[k] + b1_hat[s] * xg),
+                risk = exp(a_ks + b1_hat[s] * xg),
                 stringsAsFactors = FALSE)
     }))
   })
   sero_lines <- do.call(rbind, sero_lines_list)
 
-  # ---- Global population-average curve + 95% band, per facet -------------
+  # ---- Per-study population-average curve + 95% band, per facet ----------
+  # Intercept = mean_s(a[k,s]) over just the serotypes THIS study reports
+  # (same quantity as study_summary()'s a_bar), not the global mu_a -- a[k,s]
+  # no longer decomposes into a shared a[s] plus a per-study shift.
   xr  <- range(c(x_u_med, x_i_med))
   pad <- 0.1 * diff(xr)
   xg  <- seq(xr[1] - pad, xr[2] + pad, length.out = 200)
   fit_glob_list <- lapply(seq_len(K), function(k) {
-    delta_draws <- if (k == 1) rep(0, nrow(M)) else M[, sprintf("delta[%d]", k)]
-    line_mat <- outer(M[, "mu_a"] + delta_draws, rep(1, length(xg))) + outer(M[, "mu_b1"], xg)
+    o <- prep$outcome_sources[[k]]
+    if (o$S == 0) return(NULL)
+    idx <- match(o$serotypes, serotypes)
+    a_cols <- sprintf("a[%d,%d]", k, idx)
+    a_bar_draws <- if (length(a_cols) > 1) rowMeans(M[, a_cols, drop = FALSE]) else M[, a_cols]
+    line_mat <- outer(a_bar_draws, rep(1, length(xg))) + outer(M[, "mu_b1"], xg)
     data.frame(
       Study = prep$study_labels[k], study_idx = k,
       gmc = exp(xg),
@@ -1268,7 +1297,7 @@ plot_cop_absolute_multistudy <- function(prep, samp, out_dir, title_suffix = "")
   subt <- paste0("Points = observed serotype x arm per outcome study (circle = unimmunized, triangle = immunized); ",
                 "x = pooled posterior GMC estimate (all immunogenicity sources combined); ",
                 "dotted lines = each serotype's own fitted risk-GMC relationship; ",
-                "black line = population-average fit per study (mu_a + study fixed effect, mu_b1) with 95% credible band")
+                "black line = population-average fit per study (that study's own mean a[k,s], mu_b1) with 95% credible band")
   cap <- if (any(pts$zero))
     "Open symbols: an arm has zero cases; risk uses a 0.5 continuity correction." else NULL
 
@@ -1312,7 +1341,7 @@ plot_cop_absolute_multistudy <- function(prep, samp, out_dir, title_suffix = "")
       pk <- pts[pts$Study == lab, ]
       plot(NA, xlim = xlim, ylim = ylim, log = "xy",
            xlab = "Pooled absolute GMC", ylab = "Absolute risk",
-           main = paste0(lab, if (k == 1) " (reference)" else ""))
+           main = lab)
       polygon(c(fg$gmc, rev(fg$gmc)), c(fg$lo, rev(fg$hi)),
               col = adjustcolor("grey60", 0.25), border = NA)
       lines(fg$gmc, fg$med, col = "black", lwd = 2)

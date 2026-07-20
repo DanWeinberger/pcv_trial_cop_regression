@@ -8,19 +8,21 @@
 ##   * OUTCOME: many outcome STUDIES (k = 1..K), each contributing IPD case
 ##     counts for whichever serotypes IT covers (ragged -- e.g. a PCV7 study
 ##     and a PCV13-additional-serotype study cover disjoint serotype sets).
-##     Every study shares the SAME per-serotype baseline a[s] and slope b1[s]
-##     (the scientific question -- is there one consistent correlate of
-##     protection across data sources), but studies differ in overall case
-##     ascertainment / surveillance intensity, captured by a per-study FIXED
-##     effect delta[k] added to the log-rate. "Fixed" (not hierarchical):
-##     each delta[k] gets its own vague prior, not a shared hyperdistribution
-##     -- there is no population of studies being generalized over here, just
-##     a handful of known, specific data sources. Identified by reference-
-##     study coding: delta[1] <- 0, so a[s]/mu_a are the baseline for outcome
-##     study 1 and delta[k], k>1, are shifts relative to it. (This requires
-##     the design to be "connected" -- every study must share at least one
-##     serotype with some other study, directly or transitively, or that
-##     study's delta[k] is confounded with the a[s] of its unique serotypes.)
+##     Every study shares the SAME per-serotype slope b1[s] (the scientific
+##     question -- is there one consistent correlate of protection across
+##     data sources), but the baseline log-rate is allowed to vary FREELY by
+##     BOTH study and serotype: a[k,s], hierarchically shrunk toward a single
+##     shared hypermean/hypervariance (mu_a, tau_a), exactly like b1[s] and
+##     x_u[s]/x_i[s] below. This absorbs both cross-study differences in case
+##     ascertainment / surveillance intensity AND serotype-specific deviations
+##     from that, without needing a separate additive per-study fixed effect
+##     -- a[k,s] already has its own free parameter for every (study, serotype)
+##     combination actually observed in the data, so a study-level shift would
+##     be redundant/collinear with it. (There is therefore no "reference
+##     study" or connectedness requirement for the outcome design any more --
+##     unlike the slope b1[s], which IS pooled across studies that share a
+##     serotype, the baseline a[k,s] for a study/serotype combo is informed
+##     only by that combo's own data plus shrinkage toward mu_a/tau_a.)
 ##
 ##   * IMMUNOGENICITY: many immunogenicity STUDIES/sources (no count index
 ##     needed in the model -- see N_imm_u/N_imm_i below), each contributing
@@ -77,12 +79,23 @@ model {
     x_u[s] ~ dnorm(mu_x_u, tau_x_u)
     x_i[s] ~ dnorm(mu_x_i, tau_x_i)
 
-    # Serotype-specific intercept (baseline for outcome study 1, see delta[])
-    # and slope, each shrunk toward its global hypermean.
-    a[s]  ~ dnorm(mu_a,  tau_a)
+    # Serotype-specific slope, shrunk toward its global hypermean. (The
+    # baseline intercept a[k,s] below varies by STUDY as well as serotype --
+    # see the study x serotype loop.)
     b1[s] ~ dnorm(mu_b1, tau_b1)
 
     rr[s] <- exp(b1[s])     # rate ratio per unit absolute log-GMC
+  }
+
+  ## ---- Study x serotype intercept -----------------------------------------
+  ## Baseline log-rate for every (study, serotype) combination, shrunk toward
+  ## one shared hypermean/hypervariance (mu_a, tau_a). No separate per-study
+  ## fixed effect is needed -- a[k,s] already has its own free parameter per
+  ## combination, so a study-level shift would be redundant/collinear with it.
+  for (k in 1:K) {
+    for (s in 1:S) {
+      a[k,s] ~ dnorm(mu_a, tau_a)
+    }
   }
 
   ## ---- Immunogenicity measurement model: pool multiple studies onto the ---
@@ -95,25 +108,19 @@ model {
   }
 
   ## ---- Outcome likelihood: many studies, ragged over serotypes, sharing --
-  ## ---- a[s]/b1[s]/x but with a per-study fixed-effect shift on baseline --
+  ## ---- b1[s]/x but with a study x serotype specific baseline a[k,s] ------
   for (m in 1:N_out) {
-    log(lambda_u[m]) <- log(total_u[m]) + a[sero_out[m]] + delta[study_out[m]] +
+    log(lambda_u[m]) <- log(total_u[m]) + a[study_out[m], sero_out[m]] +
                          b1[sero_out[m]] * x_u[sero_out[m]]
     cases_u[m] ~ dpois(lambda_u[m])
 
-    log(lambda_i[m]) <- log(total_i[m]) + a[sero_out[m]] + delta[study_out[m]] +
+    log(lambda_i[m]) <- log(total_i[m]) + a[study_out[m], sero_out[m]] +
                          b1[sero_out[m]] * x_i[sero_out[m]]
     cases_i[m] ~ dpois(lambda_i[m])
   }
 
-  ## ---- Outcome-study fixed effect (reference-study coding) ----------------
-  delta[1] <- 0
-  for (k in 2:K) {
-    delta[k] ~ dnorm(0, 1.0E-4)
-  }
-
   ## ---- Hyperpriors ---------------------------------------------------------
-  # Intercepts (baseline for outcome study 1)
+  # Study x serotype intercepts
   mu_a ~ dnorm(0, 1.0E-4)
   tau_a ~ dgamma(0.01, 0.01)
   sigma_a <- 1 / sqrt(tau_a)
